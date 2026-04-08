@@ -32,10 +32,12 @@ The next development steps are:
 
 ## Run notes
 
+Preferred local setup is documented in [SETUP_LOCAL.md](./SETUP_LOCAL.md).
+
 Backend:
 
 ```bash
-uv run python server_main.py --port 6400 --reload
+python server_main.py --port 6400 --reload
 ```
 
 Frontend:

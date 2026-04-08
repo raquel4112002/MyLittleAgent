@@ -13,6 +13,7 @@ from runtime.node.executor.base import ExecutionContext
 from runtime.node.executor.factory import NodeExecutorFactory
 from utils.logger import WorkflowLogger
 from utils.exceptions import ValidationError, WorkflowExecutionError, WorkflowCancelledError
+from sessions.manager import SessionManager
 from utils.structured_logger import get_server_logger
 from utils.human_prompt import (
     CliPromptChannel,
@@ -100,6 +101,8 @@ class GraphExecutor:
 
         # for majority voting mode
         self.initial_task_messages: List[Message] = []
+        self.session_manager = SessionManager()
+        self.observability_session_id = runtime.session_id or graph.name
 
     def request_cancel(self, reason: Optional[str] = None) -> None:
         """Signal the executor to stop as soon as possible."""
@@ -266,6 +269,7 @@ class GraphExecutor:
         except ConfigError as err:
             error_msg = f"Graph configuration error: {str(err)}"
             self.log_manager.logger.error(error_msg)
+            self.session_manager.mark_failed(self.observability_session_id, error_msg)
             raise err
 
         self._prepare_edge_conditions()
@@ -275,6 +279,13 @@ class GraphExecutor:
 
         # Record workflow start
         self.log_manager.record_workflow_start(self.graph.metadata)
+        if self.session_manager.get_session(self.observability_session_id) is None:
+            self.session_manager.create_session(
+                workflow_id=self.graph.name,
+                metadata={"graph_name": self.graph.name},
+                session_id=self.observability_session_id,
+            )
+        self.session_manager.mark_running(self.observability_session_id, workflow_id=self.graph.name)
 
         # Initialize memory and thinking before execution
         self._build_memories_and_thinking()
@@ -298,32 +309,36 @@ class GraphExecutor:
                     node.append_input(message.clone())
 
         # Execute based on graph type (using strategy objects)
-        if self.graph.is_majority_voting:
-            strategy = MajorityVoteStrategy(
-                log_manager=self.log_manager,
-                nodes=self.graph.nodes,
-                initial_messages=self.initial_task_messages,
-                execute_node_func=self._execute_node,
-                payload_to_text_func=self._payload_to_text,
-            )
-            self.majority_result = strategy.run()
-        elif self.graph.has_cycles:
-            strategy = CycleExecutionStrategy(
-                log_manager=self.log_manager,
-                nodes=self.graph.nodes,
-                cycle_execution_order=self.graph.cycle_execution_order,
-                cycle_manager=self.cycle_manager,
-                execute_node_func=self._execute_node,
-            )
-            strategy.run()
-        else:
-            strategy = DagExecutionStrategy(
-                log_manager=self.log_manager,
-                nodes=self.graph.nodes,
-                layers=self.graph.layers,
-                execute_node_func=self._execute_node,
-            )
-            strategy.run()
+        try:
+            if self.graph.is_majority_voting:
+                strategy = MajorityVoteStrategy(
+                    log_manager=self.log_manager,
+                    nodes=self.graph.nodes,
+                    initial_messages=self.initial_task_messages,
+                    execute_node_func=self._execute_node,
+                    payload_to_text_func=self._payload_to_text,
+                )
+                self.majority_result = strategy.run()
+            elif self.graph.has_cycles:
+                strategy = CycleExecutionStrategy(
+                    log_manager=self.log_manager,
+                    nodes=self.graph.nodes,
+                    cycle_execution_order=self.graph.cycle_execution_order,
+                    cycle_manager=self.cycle_manager,
+                    execute_node_func=self._execute_node,
+                )
+                strategy.run()
+            else:
+                strategy = DagExecutionStrategy(
+                    log_manager=self.log_manager,
+                    nodes=self.graph.nodes,
+                    layers=self.graph.layers,
+                    execute_node_func=self._execute_node,
+                )
+                strategy.run()
+        except Exception as exc:
+            self.session_manager.mark_failed(self.observability_session_id, str(exc))
+            raise
 
         self._raise_if_cancelled()
 
@@ -338,6 +353,7 @@ class GraphExecutor:
         # Export runtime artifacts
         archiver = ResultArchiver(self.graph, self.log_manager, self.token_tracker)
         archiver.export(final_result)
+        self.session_manager.mark_completed(self.observability_session_id)
 
         return self.outputs
     
@@ -556,6 +572,7 @@ class GraphExecutor:
             serialized_inputs = [message.to_dict(include_data=False) for message in input_results]
 
             # Record node start
+            self.session_manager.mark_agent_active(self.observability_session_id, agent_id=node.id, node_id=node.id)
             self.log_manager.record_node_start(node.id, serialized_inputs, node.node_type, {
                 "input_count": len(input_results),
                 "predecessors": [p.id for p in node.predecessors],
@@ -632,6 +649,8 @@ class GraphExecutor:
                 "output_role": output_role,
                 "output_source": output_source
             })
+
+            self.session_manager.mark_agent_completed(self.observability_session_id, agent_id=node.id, node_id=node.id)
 
             # Pass results to successor nodes via edges
             # For each output message, process all edges

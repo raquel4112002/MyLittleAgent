@@ -2,16 +2,22 @@
 
 from typing import Optional
 
+from events.bus import EventBus
 from server.services.websocket_manager import WebSocketManager
+from sessions.manager import SessionManager
 from utils.exceptions import ValidationError
 
 websocket_manager: Optional[WebSocketManager] = None
+session_manager: Optional[SessionManager] = None
+event_bus: Optional[EventBus] = None
 
 
 def init_state() -> None:
     """Ensure global singletons are ready for incoming requests."""
 
     get_websocket_manager()
+    get_session_manager()
+    get_event_bus()
 
 
 def get_websocket_manager() -> WebSocketManager:
@@ -19,6 +25,20 @@ def get_websocket_manager() -> WebSocketManager:
     if websocket_manager is None:
         websocket_manager = WebSocketManager()
     return websocket_manager
+
+
+def get_session_manager() -> SessionManager:
+    global session_manager
+    if session_manager is None:
+        session_manager = SessionManager()
+    return session_manager
+
+
+def get_event_bus() -> EventBus:
+    global event_bus
+    if event_bus is None:
+        event_bus = EventBus()
+    return event_bus
 
 
 def ensure_known_session(session_id: str, *, require_connection: bool = False) -> WebSocketManager:
