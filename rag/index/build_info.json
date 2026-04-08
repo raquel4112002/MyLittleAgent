@@ -1,0 +1,8 @@
+{
+  "mode": "hash",
+  "embedding_model": null,
+  "dimension": 256,
+  "document_count": 24,
+  "chunk_size": 1200,
+  "overlap": 150
+}

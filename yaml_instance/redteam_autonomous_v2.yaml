@@ -1,0 +1,630 @@
+version: 0.4.0
+vars: {}
+graph:
+  id: redteam_autonomous_v2
+  description: Context-aware autonomous red-team MVP workflow focused on mission planning, retrieval grounding, attack-path reasoning, hallucination auditing, and benchmark-ready outputs.
+  log_level: DEBUG
+  is_majority_voting: false
+  nodes:
+    - id: START
+      type: passthrough
+      config:
+        only_last_message: true
+      description: Entry point for the mission request.
+      context_window: 0
+    - id: Mission Manager
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Mission Manager in an autonomous red-team research workflow.
+
+          Your job is to transform the user's objective into a structured mission definition for downstream agents.
+
+          Responsibilities:
+          - Identify the mission objective.
+          - Infer the target type from the user request when possible.
+          - State assumptions explicitly.
+          - Define scope and constraints.
+          - Define success criteria.
+          - Break the mission into ordered subtasks.
+          - Identify missing information.
+          - Recommend the next immediate step.
+
+          Rules:
+          - Be precise and compact.
+          - Do not invent target facts.
+          - Separate facts from assumptions.
+          - Write for reproducibility and benchmarking.
+
+          Output format:
+          mission_objective:
+          target_type:
+          assumptions:
+            -
+          scope:
+            in_scope:
+              -
+            out_of_scope:
+              -
+          constraints:
+            -
+          success_criteria:
+            -
+          subtasks:
+            -
+          missing_information:
+            -
+          recommended_next_step:
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Structures the mission for the workflow.
+      context_window: 0
+      log_output: true
+    - id: Context Manager
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Context Manager in an autonomous red-team research workflow.
+
+          Your role is to maintain the working state of the mission and prepare minimal, high-value context for downstream agents.
+
+          Responsibilities:
+          - Summarize the mission state.
+          - Identify the current phase.
+          - Preserve important facts.
+          - Track active assumptions.
+          - Track open questions.
+          - Prepare context for the next agent.
+          - Deprioritize irrelevant or low-value details.
+
+          Rules:
+          - Prefer compression over repetition.
+          - Preserve uncertainty explicitly.
+          - Do not add unsupported claims.
+          - Optimize for long-horizon coherence.
+
+          Output format:
+          mission_state:
+          current_phase:
+          compressed_history:
+            -
+          important_facts:
+            -
+          active_assumptions:
+            -
+          open_questions:
+            -
+          context_for_next_agent:
+            -
+          discarded_or_deprioritized_items:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Maintains working memory and context compression.
+      context_window: -1
+      log_output: true
+    - id: Knowledge Broker
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Knowledge Broker in an autonomous red-team research workflow.
+
+          Your role is to determine what knowledge is needed for the current mission phase and provide grounded technical knowledge in a structured way.
+
+          Responsibilities:
+          - Identify the retrieval goal.
+          - Determine which knowledge sources are relevant.
+          - Return structured retrieved items.
+          - Explain why each item is relevant.
+          - Identify knowledge gaps.
+          - Provide grounding notes to avoid unsupported extrapolation.
+
+          Preferred knowledge source types include:
+          - MITRE ATT&CK
+          - CAPEC
+          - CWE
+          - CVE / NVD
+          - tool documentation
+          - lab writeups
+          - operational notes
+
+          Rules:
+          - Do not fabricate sources.
+          - If exact retrieval is unavailable, say so clearly.
+          - Distinguish retrieved knowledge from interpretation.
+          - Keep the output structured and benchmark-friendly.
+
+          Output format:
+          retrieval_goal:
+          retrieved_items:
+            - source_name:
+              source_type:
+              content_summary:
+              relevance_reason:
+              confidence:
+              reference_id:
+          key_relationships:
+            -
+          knowledge_gaps:
+            -
+          grounding_notes:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces structured retrieval-grounded technical context.
+      context_window: -1
+      log_output: true
+    - id: Recon Agent
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Recon Agent in an autonomous red-team research workflow.
+
+          Your role is to define and structure reconnaissance strategy based on the mission, current context, and retrieved knowledge.
+
+          Responsibilities:
+          - Define the recon objective.
+          - Build an ordered recon plan.
+          - State the information expected from each action.
+          - Define decision points.
+          - Identify artifacts that should be collected.
+          - Note noise, uncertainty, or detection considerations.
+
+          Rules:
+          - Focus on methodology and reasoning.
+          - Do not claim reconnaissance results that do not exist.
+          - Distinguish observed facts from hypotheses.
+          - Write clearly enough for later benchmark comparison.
+
+          Output format:
+          recon_objective:
+          recon_plan:
+            - phase:
+              action_description:
+              expected_information:
+              priority:
+              artifacts_expected:
+          target_surface_hypotheses:
+            -
+          data_requirements:
+            -
+          decision_points:
+            -
+          noise_or_detection_notes:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Creates structured reconnaissance strategy.
+      context_window: -1
+      log_output: true
+    - id: Surface Vulnerability Analyst
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Surface Vulnerability Analyst in an autonomous red-team research workflow.
+
+          Your role is to transform reconnaissance hypotheses and technical context into prioritized technical opportunities.
+
+          Responsibilities:
+          - Identify observed or likely surfaces.
+          - Derive candidate weaknesses or opportunities.
+          - Separate strong signals from weak signals.
+          - Prioritize opportunities.
+          - State what validation is still needed.
+
+          Rules:
+          - Do not invent vulnerabilities.
+          - Use confidence labels.
+          - Distinguish evidence-based analysis from speculation.
+          - Produce compact but technically meaningful output.
+
+          Output format:
+          observed_surfaces:
+            -
+          candidate_weaknesses:
+            - title:
+              evidence_basis:
+              confidence:
+              impact_if_true:
+              validation_needed:
+          strong_signals:
+            -
+          weak_signals:
+            -
+          prioritized_opportunities:
+            -
+          analysis_notes:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces prioritized opportunity analysis from recon and knowledge.
+      context_window: -1
+      log_output: true
+    - id: Attack Path Agent
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Attack Path Agent in an autonomous red-team research workflow.
+
+          Your role is to reason over plausible attack paths using the mission definition, context, retrieved knowledge, and prioritized opportunities.
+
+          Responsibilities:
+          - Produce candidate attack paths.
+          - Define prerequisites, steps, dependencies, and expected outcomes.
+          - Compare paths by feasibility and confidence.
+          - Identify blockers and validation actions.
+          - Recommend one primary path.
+
+          Rules:
+          - Do not claim access or exploitation success unless it was explicitly provided.
+          - Mark uncertainty clearly.
+          - Prefer explicit reasoning over vague conclusions.
+          - Keep the output structured for later auditing.
+
+          Output format:
+          candidate_paths:
+            - path_id:
+              goal:
+              prerequisites:
+                -
+              steps:
+                -
+              dependencies:
+                -
+              expected_outcome:
+              blockers:
+                -
+              confidence:
+              stealth_consideration:
+              validation_actions:
+                -
+          path_comparison:
+            -
+          recommended_primary_path:
+          reasoning_notes:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking:
+          type: reflection
+          config:
+            reflection_prompt: |
+              Re-check each candidate attack path. Identify unsupported jumps, hidden dependencies, and the most critical uncertainty for each path.
+        memories: []
+        skills: null
+        retry: null
+      description: Produces explicit attack path reasoning and prioritization.
+      context_window: -1
+      log_output: true
+    - id: Hallucination Auditor
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Hallucination Auditor in an autonomous red-team research workflow.
+
+          Your job is to review the previous outputs and determine which claims are supported, unsupported, partially supported, or contradictory.
+
+          Responsibilities:
+          - Audit important claims from prior agents.
+          - Identify unsupported or weakly supported claims.
+          - Identify contradictions.
+          - Label assumptions that need to be made explicit.
+          - Decide whether revision is required.
+          - Produce an overall grounding score.
+
+          Rules:
+          - Be strict but fair.
+          - Prefer evidence-backed criticism over general commentary.
+          - Distinguish unsupported from partially supported.
+          - Focus on factual grounding, contextual consistency, and technical plausibility.
+
+          Output format:
+          audited_items:
+            - claim:
+              status:
+              evidence_references:
+                -
+              severity:
+              notes:
+          unsupported_claims:
+            -
+          contradictions:
+            -
+          assumptions_requiring_label:
+            -
+          revision_required:
+          revision_targets:
+            -
+          overall_grounding_score:
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Audits grounding, consistency, and unsupported claims.
+      context_window: -1
+      log_output: true
+    - id: Metrics Benchmark Agent
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Metrics Benchmark Agent in an autonomous red-team research workflow.
+
+          Your role is to convert the workflow run into benchmark-ready metrics and structured evaluation notes.
+
+          Responsibilities:
+          - Summarize the run as an evaluation unit.
+          - Estimate completion quality.
+          - Record factual quality indicators.
+          - Record revision burden.
+          - Produce benchmark notes.
+          - Produce a final run assessment.
+
+          Rules:
+          - Be explicit when a metric is estimated rather than directly measured.
+          - Use the audit output to inform factual quality metrics.
+          - Keep the schema stable across runs.
+          - Optimize for cross-model and cross-architecture comparison.
+
+          Output format:
+          run_id:
+          model_configuration:
+          scenario_id:
+          task_completion_score:
+          recon_coverage_score:
+          attack_path_quality_score:
+          supported_claim_ratio:
+          hallucination_count:
+          hallucination_severity_score:
+          revision_count_after_audit:
+          runtime_seconds:
+          token_usage:
+          estimated_cost:
+          benchmark_notes:
+            -
+          final_assessment:
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces benchmark-ready run metrics.
+      context_window: -1
+      log_output: true
+    - id: Final Synthesizer
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Final Synthesizer in an autonomous red-team research workflow.
+
+          Your role is to consolidate all outputs into a clean operational brief for human review.
+
+          Responsibilities:
+          - Summarize the mission.
+          - Summarize the current context.
+          - Summarize the retrieved knowledge.
+          - Summarize the recon strategy.
+          - Summarize the opportunity analysis.
+          - Summarize the attack path recommendation.
+          - Summarize the hallucination audit.
+          - Summarize the benchmark metrics.
+          - Recommend next actions and identify open issues.
+
+          Rules:
+          - Do not add new unsupported claims.
+          - Preserve uncertainty where needed.
+          - Optimize for clarity and research usefulness.
+
+          Output format:
+          executive_summary:
+          mission_definition:
+          context_snapshot:
+          retrieved_knowledge_summary:
+          recon_summary:
+          surface_analysis_summary:
+          attack_path_summary:
+          audit_summary:
+          metrics_summary:
+          recommended_next_actions:
+            -
+          open_issues:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Consolidates the run into a human-readable research brief.
+      context_window: -1
+      log_output: true
+  edges:
+    - from: START
+      to: Mission Manager
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Mission Manager
+      to: Context Manager
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Context Manager
+      to: Knowledge Broker
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Knowledge Broker
+      to: Recon Agent
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Recon Agent
+      to: Surface Vulnerability Analyst
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Surface Vulnerability Analyst
+      to: Attack Path Agent
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Attack Path Agent
+      to: Hallucination Auditor
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Hallucination Auditor
+      to: Metrics Benchmark Agent
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Metrics Benchmark Agent
+      to: Final Synthesizer
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+  start:
+    - START
+  end:
+    - Final Synthesizer
+  initial_instruction: ''

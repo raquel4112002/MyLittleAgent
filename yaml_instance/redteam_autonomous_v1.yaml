@@ -1,0 +1,384 @@
+version: 0.4.0
+vars: {}
+graph:
+  id: redteam_autonomous_v1
+  description: Autonomous red-team planning and analysis workflow for research, pentest orchestration, attack-path reasoning, evidence structuring, and benchmark-oriented reporting.
+  log_level: DEBUG
+  is_majority_voting: false
+  nodes:
+    - id: START
+      type: passthrough
+      config:
+        only_last_message: true
+      description: Entry point for the user objective.
+      context_window: 0
+    - id: Mission Control
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Mission Control in an autonomous red-team research system.
+
+          Your job is to convert a user objective into a disciplined, scoped mission plan.
+          You must think like a lead operator, systems architect, and research coordinator.
+
+          Primary responsibilities:
+          1. Extract the real goal, target type, assumptions, scope, and constraints.
+          2. Distinguish clearly between authorized security research tasks and anything unsafe, illegal, or out of scope.
+          3. Break the mission into structured work packages for downstream agents.
+          4. Define what good evidence and measurable outcomes look like.
+          5. If the request is ambiguous, state assumptions explicitly instead of inventing hidden facts.
+
+          Output structure:
+          - Mission objective
+          - Target and environment assumptions
+          - Explicit scope boundaries
+          - Constraints and dependencies
+          - Required inputs still missing
+          - Tasking for Recon Analyst
+          - Tasking for Attack Path Analyst
+          - Tasking for Evidence Officer
+          - Tasking for Evaluation Lead
+
+          Rules:
+          - Be precise, compact, and operational.
+          - Do not claim exploitation results or environmental facts you do not have.
+          - Optimize for reproducibility and later benchmarking.
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Converts the user request into a scoped mission plan.
+      context_window: 0
+      log_output: true
+    - id: Recon Analyst
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Recon Analyst in an autonomous red-team research workflow.
+
+          Your job is to transform the mission plan into a structured reconnaissance and enumeration strategy.
+
+          Responsibilities:
+          - Identify the categories of information that should be collected.
+          - Propose a phased recon plan covering passive recon, active enumeration, validation, and data normalization.
+          - Recommend concrete tools and command families where appropriate.
+          - Explain what each recon activity is expected to reveal.
+          - Highlight data quality issues, uncertainty, and branching conditions.
+
+          Output structure:
+          - Recon objectives
+          - Information to collect
+          - Ordered recon phases
+          - Suggested tools / command families
+          - Expected artifacts
+          - Decision points
+          - Risks / noise / detection considerations
+
+          Rules:
+          - Focus on methodology, not bravado.
+          - Prefer observable, repeatable, benchmarkable collection steps.
+          - Clearly separate confirmed information from hypotheses.
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces a structured reconnaissance strategy.
+      context_window: -1
+      log_output: true
+    - id: Attack Path Analyst
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Attack Path Analyst in an autonomous red-team research workflow.
+
+          Your task is to reason over likely paths from initial access opportunities to meaningful objectives.
+
+          Responsibilities:
+          - Derive plausible attack paths from the mission plan and recon strategy.
+          - Break each path into prerequisites, actions, dependencies, and expected outcomes.
+          - Compare paths by feasibility, stealth, required effort, and evidence confidence.
+          - Identify chokepoints, assumptions, and information gaps.
+          - Recommend what should be validated next before execution.
+
+          Output structure:
+          - Candidate attack paths
+          - For each path: prerequisites, sequence, dependencies, likely blockers, validation needs
+          - Comparative prioritization
+          - Key assumptions
+          - Recommended next validation actions
+
+          Rules:
+          - Think structurally and adversarially.
+          - Do not fabricate vulnerabilities or access.
+          - Favor explicit reasoning and measurable decision criteria.
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking:
+          type: reflection
+          config:
+            reflection_prompt: |
+              Re-check the candidate attack paths. Identify assumptions, hidden dependencies, and the single most important uncertainty per path.
+        memories: []
+        skills: null
+        retry: null
+      description: Produces attack-path analysis and prioritization.
+      context_window: -1
+      log_output: true
+    - id: Evidence Officer
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Evidence Officer in an autonomous red-team research workflow.
+
+          Your job is to transform the mission plan, recon strategy, and attack-path analysis into a rigorous evidence model.
+
+          Responsibilities:
+          - Define what evidence should be captured at each stage.
+          - Specify how findings should be structured for reproducibility.
+          - Identify logs, screenshots, command outputs, artifacts, and metadata worth preserving.
+          - Propose a normalized schema for findings and experiment runs.
+          - Distinguish facts, interpretations, and unresolved questions.
+
+          Output structure:
+          - Evidence objectives
+          - Evidence to capture by phase
+          - Artifact schema
+          - Suggested finding template
+          - Reproducibility notes
+          - Chain-of-custody / traceability notes
+
+          Rules:
+          - Prioritize clean documentation and evaluation readiness.
+          - Write for later reporting, thesis work, and benchmark comparison.
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Defines evidence collection and documentation structure.
+      context_window: -1
+      log_output: true
+    - id: Evaluation Lead
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Evaluation Lead in an autonomous red-team research workflow.
+
+          Your job is to define how this mission should be measured as an experiment.
+
+          Responsibilities:
+          - Translate the mission into evaluation criteria.
+          - Propose metrics for success, efficiency, coverage, cost, reliability, and reproducibility.
+          - Define benchmark outputs that can be compared across runs, models, or workflows.
+          - Identify confounders, invalid comparisons, and missing controls.
+          - Recommend a minimal experiment record for thesis-quality analysis.
+
+          Output structure:
+          - Evaluation goals
+          - Primary and secondary metrics
+          - Required benchmark artifacts
+          - Experimental controls / variables
+          - Failure conditions
+          - Recommended comparison design
+
+          Rules:
+          - Prioritize measurable, reproducible evaluation.
+          - Be explicit when a metric is qualitative versus quantitative.
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Defines metrics and experimental evaluation.
+      context_window: -1
+      log_output: true
+    - id: Final Synthesizer
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Final Synthesizer in an autonomous red-team research workflow.
+
+          You receive outputs from Mission Control, Recon Analyst, Attack Path Analyst, Evidence Officer, and Evaluation Lead.
+          Your job is to consolidate them into one coherent operational brief.
+
+          Output structure:
+          - Executive summary
+          - Scoped mission definition
+          - Recon plan
+          - Attack-path priorities
+          - Evidence plan
+          - Evaluation plan
+          - Open questions / next design decisions
+
+          Rules:
+          - Preserve nuance and uncertainty.
+          - Do not add unsupported claims.
+          - Produce a document suitable for planning discussion with a human operator.
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Consolidates the workflow outputs into one planning brief.
+      context_window: -1
+      log_output: true
+  edges:
+    - from: START
+      to: Mission Control
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Mission Control
+      to: Recon Analyst
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Mission Control
+      to: Attack Path Analyst
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Mission Control
+      to: Evidence Officer
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Mission Control
+      to: Evaluation Lead
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Recon Analyst
+      to: Final Synthesizer
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Attack Path Analyst
+      to: Final Synthesizer
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Evidence Officer
+      to: Final Synthesizer
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Evaluation Lead
+      to: Final Synthesizer
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+  start:
+    - START
+  end:
+    - Final Synthesizer
+  initial_instruction: ''

@@ -1,0 +1,255 @@
+version: 0.4.0
+vars: {}
+graph:
+  id: redteam_autonomous_v2_lite
+  description: Lightweight autonomous red-team MVP workflow for local Ollama testing with compact prompts and reduced agent count.
+  log_level: DEBUG
+  is_majority_voting: false
+  nodes:
+    - id: START
+      type: passthrough
+      config:
+        only_last_message: true
+      description: Entry point for the mission request.
+      context_window: 0
+    - id: Mission Manager
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Mission Manager.
+          Turn the user request into a short structured mission.
+
+          Rules:
+          - Be brief.
+          - Do not invent target facts.
+          - Separate facts from assumptions.
+
+          Output format:
+          mission_objective:
+          target_type:
+          assumptions:
+            -
+          scope:
+            -
+          success_criteria:
+            -
+          next_step:
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Creates a short mission definition.
+      context_window: 0
+      log_output: true
+    - id: Recon Agent
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Recon Agent.
+          Produce a short reconnaissance plan for the mission.
+
+          Rules:
+          - Focus on planning only.
+          - Do not claim actual recon results.
+          - Keep it compact.
+
+          Output format:
+          recon_objective:
+          recon_steps:
+            -
+          expected_artifacts:
+            -
+          likely_entry_points:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces a compact recon plan.
+      context_window: -1
+      log_output: true
+    - id: Attack Path Agent
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Attack Path Agent.
+          Based on the mission and recon plan, propose at most 2 plausible initial attack paths.
+
+          Rules:
+          - Do not claim exploitation success.
+          - Keep each path short.
+          - State uncertainty clearly.
+
+          Output format:
+          candidate_paths:
+            - path_id:
+              idea:
+              prerequisites:
+                -
+              validation_needed:
+                -
+              confidence:
+          recommended_path:
+          notes:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces at most two compact attack paths.
+      context_window: -1
+      log_output: true
+    - id: Hallucination Auditor
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Hallucination Auditor.
+          Review the previous outputs and identify unsupported claims or assumptions.
+
+          Rules:
+          - Be brief.
+          - Mark what is supported vs unsupported.
+          - If there are no serious issues, say so clearly.
+
+          Output format:
+          supported_points:
+            -
+          unsupported_points:
+            -
+          assumptions_to_label:
+            -
+          overall_assessment:
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Checks for unsupported claims.
+      context_window: -1
+      log_output: true
+    - id: Final Synthesizer
+      type: agent
+      config:
+        name: qwen3.5:9b
+        provider: openai
+        role: |-
+          You are Final Synthesizer.
+          Merge the previous outputs into one short operational brief.
+
+          Output format:
+          summary:
+          recon_plan:
+          attack_paths:
+          audit_result:
+          next_actions:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces a short final brief.
+      context_window: -1
+      log_output: true
+  edges:
+    - from: START
+      to: Mission Manager
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Mission Manager
+      to: Recon Agent
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Recon Agent
+      to: Attack Path Agent
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Attack Path Agent
+      to: Hallucination Auditor
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Hallucination Auditor
+      to: Final Synthesizer
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+  start:
+    - START
+  end:
+    - Final Synthesizer
+  initial_instruction: ''

@@ -1,0 +1,170 @@
+[
+  {
+    "chunk_id": "cwe/README.md::chunk_0",
+    "source_path": "cwe/README.md",
+    "title": "README",
+    "category": "cwe",
+    "text": "Place CWE-related source documents here.\nExamples:\n- selected CWE entries relevant to web applications\n- weakness summaries used for grounding and validation planning"
+  },
+  {
+    "chunk_id": "cwe/cwe_434_curated.md::chunk_0",
+    "source_path": "cwe/cwe_434_curated.md",
+    "title": "cwe_434_curated",
+    "category": "cwe",
+    "text": "# CWE-434 - Unrestricted Upload of File with Dangerous Type\n\nSource: https://cwe.mitre.org/data/definitions/434.html\n\n## Description\nCWE-434 concerns products that allow the upload or transfer of dangerous file types that may be automatically processed within the target environment.\n\n## Why it matters for web security testing\nThis weakness is relevant when a web application exposes file upload functionality and fails to properly validate, transform, rename, isolate, or safely serve uploaded content.\n\n## Typical consequences\n- remote code execution if uploaded content is interpreted as executable code\n- arbitrary file write or overwrite\n- defacement\n- unintended data exposure\n\n## Useful validation questions\n- Which file types are accepted?\n- Is MIME validation enforced on the server side?\n- Are dangerous extensions rejected consistently?\n- Are double extensions handled safely?\n- Are files renamed before storage?\n- Are files stored outside the web root?\n- Are uploaded files served or executed by the application stack?\n\n## Defensive and validation notes\n- Client-side validation is insufficient on its own.\n- MIME type checks alone are insufficient.\n- Filename extension checks alone are"
+  },
+  {
+    "chunk_id": "cwe/cwe_434_curated.md::chunk_1",
+    "source_path": "cwe/cwe_434_curated.md",
+    "title": "cwe_434_curated",
+    "category": "cwe",
+    "text": "validation notes\n- Client-side validation is insufficient on its own.\n- MIME type checks alone are insufficient.\n- Filename extension checks alone are insufficient.\n- Double-extension and content-type tricks should be considered in validation planning.\n- Confirmation requires observation of server-side handling, not just the existence of an upload form.\n\n## Grounding note\nCWE-434 is a weakness class and should be treated as a hypothesis generator. It does not confirm exploitability on a target without validation evidence."
+  },
+  {
+    "chunk_id": "cwe/sample_cwe_434.md::chunk_0",
+    "source_path": "cwe/sample_cwe_434.md",
+    "title": "sample_cwe_434",
+    "category": "cwe",
+    "text": "# CWE-434 Unrestricted Upload of File with Dangerous Type\n\nThis weakness occurs when a product allows the upload or transfer of dangerous file types that can be interpreted automatically within the product's environment.\n\nCommon consequences include remote code execution, arbitrary file write, defacement, or unintended data exposure.\n\nUseful validation questions include: what file types are accepted, how MIME types are enforced, whether files are renamed, where files are stored, and whether they are executed by the server."
+  },
+  {
+    "chunk_id": "mitre/README.md::chunk_0",
+    "source_path": "mitre/README.md",
+    "title": "README",
+    "category": "mitre",
+    "text": "Place MITRE-related source documents here.\nExamples:\n- ATT&CK technique summaries relevant to web applications\n- ATT&CK mappings for credential access, discovery, initial access, persistence"
+  },
+  {
+    "chunk_id": "mitre/mitre_attack_enterprise_tactics.md::chunk_0",
+    "source_path": "mitre/mitre_attack_enterprise_tactics.md",
+    "title": "mitre_attack_enterprise_tactics",
+    "category": "mitre",
+    "text": "# MITRE ATT&CK Enterprise Tactics - Curated Summary\n\nSource: https://attack.mitre.org/tactics/enterprise/\n\nThis curated summary captures ATT&CK tactics that are useful for reasoning about penetration-testing paths and post-compromise progression.\n\n## Core tactics relevant to autonomous pentesting reasoning\n\n- **Reconnaissance (TA0043)**\n  - Gathering information to plan future operations.\n  - Relevant for pre-engagement research and initial target understanding.\n\n- **Resource Development (TA0042)**\n  - Establishing or preparing resources that can support operations.\n  - Less central in the early lab-focused phases, but relevant for broader adversarial modeling.\n\n- **Initial Access (TA0001)**\n  - Getting into the target environment.\n  - Relevant for reasoning about first foothold opportunities.\n\n- **Execution (TA0002)**\n  - Running code or triggering execution paths.\n  - Relevant when the framework later moves from planning to controlled validation.\n\n- **Persistence (TA0003)**\n  - Maintaining foothold.\n  - Deferred in the current project phases but relevant for full attack-chain modeling.\n\n- **Privilege Escalation (TA0004)**\n  - Gaining higher-level permissions.\n  - Important for la"
+  },
+  {
+    "chunk_id": "mitre/mitre_attack_enterprise_tactics.md::chunk_1",
+    "source_path": "mitre/mitre_attack_enterprise_tactics.md",
+    "title": "mitre_attack_enterprise_tactics",
+    "category": "mitre",
+    "text": "ct phases but relevant for full attack-chain modeling.\n\n- **Privilege Escalation (TA0004)**\n  - Gaining higher-level permissions.\n  - Important for later Linux and multi-stage target scenarios.\n\n- **Defense Evasion (TA0005)**\n  - Avoiding detection.\n  - Relevant when comparing stealth-aware vs direct attack paths.\n\n- **Credential Access (TA0006)**\n  - Obtaining account names, passwords, tokens, or secrets.\n  - Important in authentication-heavy web applications.\n\n- **Discovery (TA0007)**\n  - Understanding the target environment.\n  - Strongly relevant for reconnaissance and post-access enumeration.\n\n- **Lateral Movement (TA0008)**\n  - Moving through an environment.\n  - More relevant in networked lab or enterprise scenarios than in single-app labs.\n\n- **Collection (TA0009)**\n  - Gathering data of interest.\n  - Relevant when defining objective-oriented paths.\n\n- **Command and Control (TA0011)**\n  - Communicating with compromised systems.\n  - Relevant for advanced later phases, not for early planning-only phases.\n\n- **Exfiltration (TA0010)**\n  - Stealing data.\n  - Usually out of scope in the early controlled benchmark phases.\n\n- **Impact (TA0040)**\n  - Manipulating, interrupting, or des"
+  },
+  {
+    "chunk_id": "mitre/mitre_attack_enterprise_tactics.md::chunk_2",
+    "source_path": "mitre/mitre_attack_enterprise_tactics.md",
+    "title": "mitre_attack_enterprise_tactics",
+    "category": "mitre",
+    "text": "**\n  - Stealing data.\n  - Usually out of scope in the early controlled benchmark phases.\n\n- **Impact (TA0040)**\n  - Manipulating, interrupting, or destroying systems or data.\n  - Out of scope for early experimental phases.\n\n## Grounding note\nATT&CK tactics are useful for attack-path abstraction and categorization. They help structure reasoning but do not prove that a specific path is feasible on a given target."
+  },
+  {
+    "chunk_id": "mitre/mitre_attack_web_recon_and_initial_access.md::chunk_0",
+    "source_path": "mitre/mitre_attack_web_recon_and_initial_access.md",
+    "title": "mitre_attack_web_recon_and_initial_access",
+    "category": "mitre",
+    "text": "# MITRE ATT&CK - Curated Techniques for Web Reconnaissance and Initial Access\n\nSource: https://attack.mitre.org/techniques/enterprise/\n\nThis curated note extracts ATT&CK concepts that are especially useful for autonomous web-application testing workflows.\n\n## Reconnaissance and target mapping\n\n### Active Scanning (T1595)\nActive scanning is relevant when an operator probes a target directly to gather information for later stages.\n\nUseful sub-techniques and interpretations:\n- **Vulnerability Scanning (T1595.002)**\n  - Useful for checking whether a target host or application configuration aligns with known weakness conditions.\n  - In the thesis workflow, this informs validation planning and fingerprint-driven hypothesis generation.\n- **Wordlist Scanning (T1595.003)**\n  - Useful for content discovery, endpoint discovery, and brute-force style path probing.\n  - In web labs, this aligns with route enumeration and hidden functionality discovery.\n\n## Initial access related web concepts\n\n### Drive-by Compromise (T1189)\nThis tactic is relevant when a target can be compromised through interaction with a malicious or vulnerable website workflow. In a lab setting, it is useful as a conceptual c"
+  },
+  {
+    "chunk_id": "mitre/mitre_attack_web_recon_and_initial_access.md::chunk_1",
+    "source_path": "mitre/mitre_attack_web_recon_and_initial_access.md",
+    "title": "mitre_attack_web_recon_and_initial_access",
+    "category": "mitre",
+    "text": "when a target can be compromised through interaction with a malicious or vulnerable website workflow. In a lab setting, it is useful as a conceptual category for web-based initial access reasoning.\n\n### Exploit Public-Facing Application (T1190)\nThis is one of the most important ATT&CK techniques for the current project.\n\nKey relevance:\n- applies to internet-facing web applications and services;\n- supports reasoning about exploitation through flaws in exposed application logic, parsing, authentication, file handling, or server-side behavior;\n- useful as a top-level mapping for many autonomous pentesting hypotheses in web targets.\n\nIn the thesis framework, T1190 should be treated as a high-level attack-path anchor rather than proof that a given vulnerability exists.\n\n## Credential and identity related concepts\n\n### Account Discovery (T1087)\nUseful when the target exposes patterns that may support enumeration of usernames, emails, or accounts.\n\n### Valid Accounts (T1078)\nUseful for reasoning about authentication abuse, default credentials, weak-password scenarios, or credential reuse when applicable.\n\n## Discovery and post-access reasoning support\n\n### Discovery (TA0007)\nRelevant for"
+  },
+  {
+    "chunk_id": "mitre/mitre_attack_web_recon_and_initial_access.md::chunk_2",
+    "source_path": "mitre/mitre_attack_web_recon_and_initial_access.md",
+    "title": "mitre_attack_web_recon_and_initial_access",
+    "category": "mitre",
+    "text": "s, weak-password scenarios, or credential reuse when applicable.\n\n## Discovery and post-access reasoning support\n\n### Discovery (TA0007)\nRelevant for understanding the environment after gaining a foothold, but also useful earlier as a conceptual frame for structured enumeration.\n\n## Grounding note\nATT&CK techniques help classify adversarial behavior and structure attack-path reasoning. They do not prove exploitability on a target and should be combined with validation evidence, OWASP testing guidance, and weakness models such as CWE."
+  },
+  {
+    "chunk_id": "mitre/mitre_t1087_account_discovery.md::chunk_0",
+    "source_path": "mitre/mitre_t1087_account_discovery.md",
+    "title": "mitre_t1087_account_discovery",
+    "category": "mitre",
+    "text": "# MITRE ATT&CK T1087 - Account Discovery\n\nSource: https://attack.mitre.org/techniques/T1087/\n\n## Why this matters\nT1087 is relevant when a target leaks or exposes information that can help identify valid users, usernames, or email accounts.\n\n## Relevance to web applications\nIn web testing, account discovery can relate to:\n- login flows\n- registration flows\n- password reset flows\n- error-message differences\n- enumeration through public profile or user search features\n\n## Grounding note\nThis technique is useful for modeling enumeration and identity-related attack hypotheses. It should only be claimed when evidence of account leakage or enumeration behavior is observed."
+  },
+  {
+    "chunk_id": "mitre/mitre_t1190_exploit_public_facing_application.md::chunk_0",
+    "source_path": "mitre/mitre_t1190_exploit_public_facing_application.md",
+    "title": "mitre_t1190_exploit_public_facing_application",
+    "category": "mitre",
+    "text": "# MITRE ATT&CK T1190 - Exploit Public-Facing Application\n\nSource: https://attack.mitre.org/techniques/T1190/\n\n## Why this matters\nT1190 is a central ATT&CK technique for autonomous penetration testing against web applications and internet-facing services.\n\nIt represents adversarial attempts to exploit vulnerabilities in public-facing applications in order to gain initial access.\n\n## Relevance to the thesis framework\nThis technique is useful for:\n- anchoring attack-path reasoning in real ATT&CK language;\n- mapping web exploitation hypotheses to a recognized adversarial technique;\n- distinguishing reconnaissance from exploitation planning;\n- organizing benchmark outputs using technique-oriented categories.\n\n## Typical application-level attack surfaces relevant to T1190\n- authentication logic\n- authorization logic\n- file upload and file handling\n- injection points\n- deserialization paths\n- template rendering\n- API endpoints\n- administration interfaces\n- server-side request handling features\n\n## Validation-oriented interpretation\nT1190 should not be interpreted as evidence that a target is exploitable.\nInstead, it should be used to ask:\n- which public-facing surfaces exist?\n- what weak"
+  },
+  {
+    "chunk_id": "mitre/mitre_t1190_exploit_public_facing_application.md::chunk_1",
+    "source_path": "mitre/mitre_t1190_exploit_public_facing_application.md",
+    "title": "mitre_t1190_exploit_public_facing_application",
+    "category": "mitre",
+    "text": "ould not be interpreted as evidence that a target is exploitable.\nInstead, it should be used to ask:\n- which public-facing surfaces exist?\n- what weakness classes might apply?\n- what validation evidence is required before stronger claims can be made?\n\n## Grounding note\nUse T1190 as a high-level attack-path category, then support it with more specific OWASP, CWE, and target-specific observations."
+  },
+  {
+    "chunk_id": "mitre/mitre_t1595_active_scanning.md::chunk_0",
+    "source_path": "mitre/mitre_t1595_active_scanning.md",
+    "title": "mitre_t1595_active_scanning",
+    "category": "mitre",
+    "text": "# MITRE ATT&CK T1595 - Active Scanning\n\nSource: https://attack.mitre.org/techniques/T1595/\n\n## Why this matters\nT1595 is useful for modeling reconnaissance behavior that directly interacts with a target in order to prepare later actions.\n\n## Relevance to web pentesting workflows\nIn the context of autonomous web testing, T1595 supports:\n- HTTP fingerprinting\n- route and endpoint discovery\n- technology stack identification\n- method testing\n- vulnerability-oriented probing\n\n## Important sub-techniques\n### T1595.002 - Vulnerability Scanning\nUseful for matching observed configurations to known weakness conditions and for prioritizing validation candidates.\n\n### T1595.003 - Wordlist Scanning\nUseful for brute-force discovery of directories, endpoints, hidden routes, and administrative paths.\n\n## Grounding note\nIn the thesis framework, T1595 should support controlled reconnaissance planning. It does not imply that aggressive scanning is always appropriate; scope and lab authorization remain critical."
+  },
+  {
+    "chunk_id": "notes/README.md::chunk_0",
+    "source_path": "notes/README.md",
+    "title": "README",
+    "category": "notes",
+    "text": "Place local experimental notes, lessons learned, benchmark observations, and curated snippets here."
+  },
+  {
+    "chunk_id": "owasp/README.md::chunk_0",
+    "source_path": "owasp/README.md",
+    "title": "README",
+    "category": "owasp",
+    "text": "Place OWASP-related source documents here.\nExamples:\n- OWASP Testing Guide excerpts\n- OWASP Top 10 notes\n- Juice Shop-related security notes"
+  },
+  {
+    "chunk_id": "owasp/owasp_top10_curated.md::chunk_0",
+    "source_path": "owasp/owasp_top10_curated.md",
+    "title": "owasp_top10_curated",
+    "category": "owasp",
+    "text": "# OWASP Top 10 - Curated Web Security Summary\n\nSource: https://owasp.org/Top10/\n\nThis note is a compact summary for grounding web-application attack reasoning in the autonomous pentesting framework.\n\n## Relevant categories for early target-aware testing\n\n- **Broken Access Control**\n  - Relevant for IDOR, missing authorization checks, and privilege escalation paths.\n\n- **Cryptographic Failures**\n  - Relevant for sensitive data exposure and weak transport/storage protections.\n\n- **Injection**\n  - Relevant for SQL injection, NoSQL injection, command injection, and related parser abuse.\n\n- **Insecure Design**\n  - Relevant when the issue arises from flawed workflow or trust assumptions rather than implementation alone.\n\n- **Security Misconfiguration**\n  - Relevant for exposed admin interfaces, verbose errors, risky defaults, and poor hardening.\n\n- **Vulnerable and Outdated Components**\n  - Relevant when fingerprinting reveals versions that may map to known issues.\n\n- **Identification and Authentication Failures**\n  - Relevant for weak login flows, account enumeration, broken reset logic, or token/session weaknesses.\n\n- **Software and Data Integrity Failures**\n  - Relevant for untrusted"
+  },
+  {
+    "chunk_id": "owasp/owasp_top10_curated.md::chunk_1",
+    "source_path": "owasp/owasp_top10_curated.md",
+    "title": "owasp_top10_curated",
+    "category": "owasp",
+    "text": "n flows, account enumeration, broken reset logic, or token/session weaknesses.\n\n- **Software and Data Integrity Failures**\n  - Relevant for untrusted updates, plugin integrity issues, or unsafe external dependencies.\n\n- **Security Logging and Monitoring Failures**\n  - Relevant more for defensive assessment than initial offensive foothold reasoning.\n\n- **Server-Side Request Forgery (SSRF)**\n  - Relevant where server-side URL fetching or integration workflows exist.\n\n## Grounding note\nThe OWASP Top 10 is useful for vulnerability-class prioritization but must not be treated as evidence that a target exhibits any specific category."
+  },
+  {
+    "chunk_id": "owasp/owasp_wstg_index.md::chunk_0",
+    "source_path": "owasp/owasp_wstg_index.md",
+    "title": "owasp_wstg_index",
+    "category": "owasp",
+    "text": "# OWASP Web Security Testing Guide - Curated Index\n\nSource: https://owasp.org/www-project-web-security-testing-guide/stable/\n\nThis curated note captures the main sections of the OWASP Web Security Testing Guide that are most relevant to the first target-aware phases of the thesis framework.\n\n## High-value testing areas for web targets\n\n### Information Gathering\nRelevant tasks include:\n- conduct search engine discovery reconnaissance for information leakage\n- fingerprint the web server\n- review webserver metafiles for information leakage\n- enumerate applications on the web server\n- review webpage content for information leakage\n- identify application entry points\n- map execution paths through the application\n- fingerprint the web application framework\n- map application architecture\n\n### Configuration and Deployment Management Testing\nRelevant tasks include:\n- test file extensions handling for sensitive information\n- review old backup and unreferenced files for sensitive information\n- enumerate infrastructure and application admin interfaces\n- test HTTP methods\n- test cloud storage exposure\n\n### Identity and Authentication Testing\nRelevant tasks include:\n- test role definitions\n- tes"
+  },
+  {
+    "chunk_id": "owasp/owasp_wstg_index.md::chunk_1",
+    "source_path": "owasp/owasp_wstg_index.md",
+    "title": "owasp_wstg_index",
+    "category": "owasp",
+    "text": "faces\n- test HTTP methods\n- test cloud storage exposure\n\n### Identity and Authentication Testing\nRelevant tasks include:\n- test role definitions\n- test user registration process\n- test for account enumeration and guessable accounts\n- test for default credentials\n- test for bypassing authentication schema\n- test for weak password policy\n- test for weak password reset functionality\n\n### Authorization Testing\nRelevant tasks include:\n- test for bypassing authorization schema\n- test for privilege escalation\n- test for insecure direct object references\n\n### Session Management Testing\nRelevant tasks include:\n- test for session management schema\n- test for insecure cookie attributes\n- test for session fixation\n- test for exposed session variables\n- test for cross-site request forgery\n- test for logout weaknesses\n- test for session timeout issues\n- test for session hijacking\n\n### Input Validation Testing\nRelevant tasks include:\n- test for reflected XSS\n- test for stored XSS\n- test for HTTP parameter pollution\n- test for SQL injection\n- test for NoSQL injection\n- test for LDAP injection\n- test for XML injection\n- test for code injection\n- test for local file inclusion\n- test for remote file"
+  },
+  {
+    "chunk_id": "owasp/owasp_wstg_index.md::chunk_2",
+    "source_path": "owasp/owasp_wstg_index.md",
+    "title": "owasp_wstg_index",
+    "category": "owasp",
+    "text": "r NoSQL injection\n- test for LDAP injection\n- test for XML injection\n- test for code injection\n- test for local file inclusion\n- test for remote file inclusion\n- test for command injection\n\n## Grounding note\nThe testing guide is useful for structuring reconnaissance, validation planning, and attack-path reasoning. It does not, by itself, confirm the existence of a vulnerability on a target."
+  },
+  {
+    "chunk_id": "owasp/sample_owasp_upload_testing.md::chunk_0",
+    "source_path": "owasp/sample_owasp_upload_testing.md",
+    "title": "sample_owasp_upload_testing",
+    "category": "owasp",
+    "text": "# OWASP File Upload Testing Notes\n\nFile upload functionality should be assessed for client-side validation bypass, server-side MIME validation, extension filtering weaknesses, path traversal issues, and unsafe execution of uploaded content.\n\nTypical validation steps include identifying upload endpoints, testing alternative extensions, testing content-type manipulation, and checking whether uploaded files are stored, served, or executed.\n\nA file upload finding is not confirmed by the existence of an upload form alone. Evidence is required regarding validation behavior and server-side handling."
+  },
+  {
+    "chunk_id": "tools/README.md::chunk_0",
+    "source_path": "tools/README.md",
+    "title": "README",
+    "category": "tools",
+    "text": "Place tool documentation here.\nExamples:\n- ffuf notes\n- nuclei notes\n- nmap web-enum notes\n- sqlmap notes"
+  }
+]

@@ -1,0 +1,528 @@
+version: 0.4.0
+vars: {}
+graph:
+  id: redteam_phase3_v1
+  description: Phase 3 workflow with a RAG-aware Knowledge Broker and an execution-planning stage for controlled real-target preparation.
+  log_level: DEBUG
+  is_majority_voting: false
+  nodes:
+    - id: START
+      type: passthrough
+      config:
+        only_last_message: true
+      description: Entry point for the target-aware mission request.
+      context_window: 0
+    - id: Mission Manager
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Mission Manager.
+          Convert the user request into a compact mission definition for a real but controlled target.
+
+          Rules:
+          - Maximum 6 bullets total.
+          - One short line per item.
+          - Preserve target URL if given.
+          - Do not invent target facts.
+          - If unknown, write unknown.
+
+          Output format:
+          mission_objective:
+          target_type:
+          target_identifier:
+          assumptions:
+            -
+          scope:
+            -
+          next_step:
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces the target-aware mission definition.
+      context_window: 0
+      log_output: true
+    - id: Context Manager
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Context Manager.
+          Compress the current mission state for downstream use.
+
+          Rules:
+          - Maximum 6 bullets total.
+          - Keep only essential facts.
+          - Separate facts from assumptions.
+          - Preserve the target identifier.
+          - Do not expand.
+
+          Output format:
+          current_phase:
+          target_identifier:
+          confirmed_facts:
+            -
+          active_assumptions:
+            -
+          open_questions:
+            -
+          context_for_next_agent:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Compresses mission state into working context.
+      context_window: -1
+      log_output: true
+    - id: Knowledge Broker
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Knowledge Broker.
+          You operate as a RAG-aware retrieval interpreter for the mission.
+
+          You MUST first call the tool `retrieve_rag_context` to obtain retrieval context for the current mission.
+          Use the mission/task, target type, and target identifier when available.
+
+          Responsibilities:
+          - Identify what knowledge is needed now.
+          - Use retrieved security knowledge from the tool output.
+          - Distinguish retrieved knowledge from non-retrieved assumptions.
+          - Keep the output compact and grounded.
+
+          Rules:
+          - Maximum 3 retrieved items.
+          - Maximum 3 knowledge gaps.
+          - Name source/topic explicitly.
+          - If retrieval returns weak or limited context, say so clearly.
+          - Do not pretend that retrieval produced evidence it did not produce.
+
+          Output format:
+          retrieval_goal:
+          retrieved_knowledge:
+            - source_or_topic:
+              why_relevant:
+              grounding_value:
+          knowledge_gaps:
+            -
+          grounding_notes:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling:
+          - type: function
+            config:
+              tools:
+                - name: retrieve_rag_context
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Interprets retrieval-grounded knowledge for downstream reasoning.
+      context_window: -1
+      log_output: true
+    - id: Recon Agent
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Recon Agent.
+          Produce a compact reconnaissance plan for a real but controlled web target.
+
+          Rules:
+          - Maximum 4 recon steps.
+          - One short line per step.
+          - No claimed results.
+          - Use target-aware language when a URL is available.
+          - Keep output compact.
+
+          Output format:
+          recon_objective:
+          recon_steps:
+            -
+          expected_artifacts:
+            -
+          likely_entry_points:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces a compact target-aware recon plan.
+      context_window: -1
+      log_output: true
+    - id: Surface Vulnerability Analyst
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Surface Vulnerability Analyst.
+          Turn the recon plan and retrieved knowledge into a compact list of plausible opportunities.
+
+          Rules:
+          - Maximum 3 opportunities.
+          - One short line per item.
+          - Distinguish stronger vs weaker signals.
+          - Do not invent confirmed vulnerabilities.
+          - Prefer opportunities grounded in retrieved knowledge when available.
+
+          Output format:
+          likely_surfaces:
+            -
+          candidate_opportunities:
+            - title:
+              confidence:
+              validation_needed:
+          strongest_signal:
+          weakest_signal:
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces compact surface and opportunity analysis.
+      context_window: -1
+      log_output: true
+    - id: Attack Path Agent
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Attack Path Agent.
+          Propose exactly 1 plausible initial attack path from the analyzed opportunities.
+
+          Rules:
+          - Exactly 1 path only.
+          - Maximum 3 steps.
+          - No exploitation claims.
+          - Mark uncertainty clearly.
+          - Keep every field short.
+          - Prefer grounding over creativity.
+
+          Output format:
+          attack_path:
+            idea:
+            prerequisites:
+              -
+            steps:
+              -
+            validation_needed:
+              -
+            confidence:
+          main_risk:
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces one compact initial attack path.
+      context_window: -1
+      log_output: true
+    - id: Execution Planner
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Execution Planner.
+          Convert the attack path into a controlled validation plan for an authorized target.
+
+          Rules:
+          - Planning only.
+          - No exploitation claims.
+          - Maximum 4 planned actions.
+          - Each action must be short and low-risk.
+          - Prefer observation and validation over aggressive execution.
+
+          Output format:
+          validation_goal:
+          planned_actions:
+            -
+          minimal_required_tools:
+            -
+          stop_conditions:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces a controlled execution-oriented validation plan.
+      context_window: -1
+      log_output: true
+    - id: Hallucination Auditor
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Hallucination Auditor.
+          Audit the previous outputs for unsupported claims and overconfident assumptions.
+
+          Rules:
+          - Maximum 2 supported points.
+          - Maximum 2 unsupported points.
+          - Maximum 2 assumptions to label.
+          - One short line per item.
+          - If no issue, say none.
+
+          Output format:
+          supported_points:
+            -
+          unsupported_points:
+            -
+          assumptions_to_label:
+            -
+          overall_assessment:
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces a compact grounding audit.
+      context_window: -1
+      log_output: true
+    - id: Metrics Benchmark Agent
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Metrics Benchmark Agent.
+          Convert this run into a compact benchmark record.
+
+          Rules:
+          - Use short values.
+          - Mark estimated values as estimated.
+          - Keep notes to max 2 bullets.
+          - Focus on qualitative summary when exact metrics are unavailable.
+
+          Output format:
+          task_completion_score:
+          attack_path_quality_score:
+          supported_claim_ratio:
+          hallucination_count:
+          benchmark_notes:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces the benchmark summary for the run.
+      context_window: -1
+      log_output: true
+    - id: Final Synthesizer
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Final Synthesizer.
+          Merge all outputs into a short final brief.
+
+          Rules:
+          - Maximum 6 bullets total.
+          - One short line per bullet.
+          - No new claims.
+          - Preserve the target identifier when present.
+
+          Output format:
+          final_summary:
+            -
+          recommended_next_actions:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces a short final operational brief.
+      context_window: -1
+      log_output: true
+  edges:
+    - from: START
+      to: Mission Manager
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Mission Manager
+      to: Context Manager
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Context Manager
+      to: Knowledge Broker
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Knowledge Broker
+      to: Recon Agent
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Recon Agent
+      to: Surface Vulnerability Analyst
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Surface Vulnerability Analyst
+      to: Attack Path Agent
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Attack Path Agent
+      to: Execution Planner
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Execution Planner
+      to: Hallucination Auditor
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Hallucination Auditor
+      to: Metrics Benchmark Agent
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+    - from: Metrics Benchmark Agent
+      to: Final Synthesizer
+      trigger: true
+      condition:
+        type: function
+        config:
+          name: 'true'
+      carry_data: true
+      keep_message: false
+      clear_context: false
+      clear_kept_context: false
+      process: null
+      dynamic: null
+  start:
+    - START
+  end:
+    - Final Synthesizer
+  initial_instruction: ''

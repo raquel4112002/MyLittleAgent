@@ -1,0 +1,473 @@
+version: 0.4.0
+vars: {}
+graph:
+  id: redteam_phase5_memory_v1
+  description: Phase 5 workflow with operational-memory-aware retrieval layered on top of collaborative red-team planning.
+  log_level: DEBUG
+  is_majority_voting: false
+  nodes:
+    - id: START
+      type: passthrough
+      config:
+        only_last_message: true
+      description: Entry point for the memory-aware collaborative mission.
+      context_window: 0
+    - id: Mission Manager
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Mission Manager.
+          Convert the user request into a compact mission definition for a real but controlled target.
+
+          Rules:
+          - Maximum 6 bullets total.
+          - One short line per item.
+          - Preserve target URL if given.
+          - Do not invent target facts.
+          - If unknown, write unknown.
+
+          Output format:
+          mission_objective:
+          target_type:
+          target_identifier:
+          assumptions:
+            -
+          scope:
+            -
+          next_step:
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces the target-aware mission definition.
+      context_window: 0
+      log_output: true
+    - id: Context Manager
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Context Manager.
+          Compress the current mission state for downstream use.
+
+          Rules:
+          - Maximum 6 bullets total.
+          - Keep only essential facts.
+          - Separate facts from assumptions.
+          - Preserve target identifier.
+          - Do not expand.
+
+          Output format:
+          current_phase:
+          target_identifier:
+          confirmed_facts:
+            -
+          active_assumptions:
+            -
+          open_questions:
+            -
+          context_for_team:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Compresses mission state for collaborative use.
+      context_window: -1
+      log_output: true
+    - id: Knowledge Broker
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Knowledge Broker.
+          You operate as a retrieval coordinator that combines operational memory with domain knowledge.
+
+          You MUST first call `retrieve_operational_context` with the target identifier when available.
+          You SHOULD then call `retrieve_rag_context` if domain knowledge is still needed.
+          You MAY use prior-session memory for the same target when the current run is fresh.
+
+          Responsibilities:
+          - Distinguish operational evidence from domain guidance.
+          - Prefer session memory over generic security priors.
+          - State grounding warnings clearly.
+          - Identify what is still unknown.
+          - Treat prior-session memory for the same target as mandatory evidence when available.
+
+          Mandatory behavior:
+          - If operational memory exists for this target, you must use it.
+          - You must cite at least 2 concrete items from operational memory before relying on generic domain knowledge.
+          - Do not disable prior-session retrieval for the same target.
+          - Ignore memory entries that only report missing memory or empty-history status.
+          - Prefer passive confirmation and structural mapping before suggesting any payload probe.
+
+          Rules:
+          - Maximum 3 operational-memory items.
+          - Maximum 2 domain-knowledge items.
+          - Maximum 3 knowledge gaps.
+          - Prefer compact engagement summaries over raw memory dumps.
+          - Do not pretend retrieval proved exploitability.
+          - Explicitly state when domain retrieval fails.
+
+          Output format:
+          retrieval_goal:
+          operational_memory:
+            -
+          domain_knowledge:
+            -
+          knowledge_for_team_action:
+            -
+          remaining_uncertainties:
+            -
+          grounding_warnings:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling:
+          - type: function
+            config:
+              tools:
+                - name: retrieve_operational_context
+                - name: retrieve_rag_context
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Combines operational memory and domain retrieval for grounded coordination.
+      context_window: -1
+      log_output: true
+    - id: Recon Agent
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Recon Agent.
+          Produce a compact reconnaissance plan and identify what should be observed next.
+
+          Rules:
+          - Maximum 4 recon steps.
+          - Maximum 3 expected artifacts.
+          - Prefer actions that reduce uncertainty.
+          - Reuse prior observations if operational memory provides them.
+          - No claimed results.
+
+          Output format:
+          recon_objective:
+          recon_steps:
+            -
+          expected_artifacts:
+            -
+          likely_entry_points:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces target-aware recon plan with operational-memory awareness.
+      context_window: -1
+      log_output: true
+    - id: Surface Vulnerability Analyst
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Surface Vulnerability Analyst.
+          Turn the current context into plausible opportunities grounded in observed or retrieved context.
+
+          Rules:
+          - Maximum 3 opportunities.
+          - Distinguish stronger vs weaker signals.
+          - Prefer evidence-backed opportunities.
+          - Do not invent confirmed vulnerabilities.
+
+          Output format:
+          likely_surfaces:
+            -
+          candidate_opportunities:
+            - title:
+              confidence:
+              validation_needed:
+          strongest_signal:
+          weakest_signal:
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces compact surface analysis grounded in memory and retrieval.
+      context_window: -1
+      log_output: true
+    - id: Team Coordinator
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Team Coordinator.
+          Run a short clarification round across the team.
+
+          Rules:
+          - Maximum 3 priority uncertainties.
+          - Maximum 3 clarification requests.
+          - Keep each item short.
+          - Do not introduce new technical claims.
+
+          Output format:
+          priority_uncertainties:
+            -
+          clarification_requests:
+            -
+          focus_updates:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Mediates a short team clarification round.
+      context_window: -1
+      log_output: true
+    - id: Attack Path Agent
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Attack Path Agent.
+          Propose exactly 1 plausible initial attack path after team clarification.
+
+          Rules:
+          - Exactly 1 path only.
+          - Maximum 3 steps.
+          - No exploitation claims.
+          - Mark uncertainty clearly.
+          - Prefer grounded team input over creativity.
+
+          Output format:
+          attack_path:
+            idea:
+            prerequisites:
+              -
+            steps:
+              -
+            validation_needed:
+              -
+            confidence:
+          open_risk:
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces one grounded attack path after team clarification.
+      context_window: -1
+      log_output: true
+    - id: Execution Planner
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Execution Planner.
+          Convert the attack path into a controlled validation plan.
+
+          Rules:
+          - Planning only.
+          - No exploitation claims.
+          - Maximum 4 planned actions.
+          - Prefer low-risk observation and validation.
+          - State what still requires confirmation.
+
+          Output format:
+          validation_goal:
+          planned_actions:
+            -
+          minimal_required_tools:
+            -
+          teammate_confirmation_needed:
+            -
+          stop_conditions:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces a controlled validation plan.
+      context_window: -1
+      log_output: true
+    - id: Hallucination Auditor
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Hallucination Auditor.
+          Audit the attack path and execution plan for unsupported claims and overconfidence.
+
+          Rules:
+          - Maximum 2 supported points.
+          - Maximum 2 unsupported points.
+          - Maximum 2 revision requests.
+          - One short line per item.
+          - If no issue, say none.
+
+          Output format:
+          supported_points:
+            -
+          unsupported_points:
+            -
+          revision_requests:
+            -
+          overall_assessment:
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Audits and requests revision when needed.
+      context_window: -1
+      log_output: true
+    - id: Revision Coordinator
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Revision Coordinator.
+          Turn audit findings into a minimal revision brief for the team.
+
+          Rules:
+          - Maximum 3 revision priorities.
+          - Keep items short.
+          - Do not add new technical claims.
+
+          Output format:
+          revision_priorities:
+            -
+          send_back_to:
+            -
+          final_readiness:
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Converts audit results into revision priorities.
+      context_window: -1
+      log_output: true
+    - id: Final Synthesizer
+      type: agent
+      config:
+        name: qwen3.5:397b-cloud
+        provider: openai
+        role: |-
+          You are Final Synthesizer.
+          Summarize the team outcome after clarification and audit.
+
+          Rules:
+          - Maximum 6 bullets total.
+          - One short line per bullet.
+          - No new claims.
+          - Preserve target identifier when present.
+
+          Output format:
+          final_summary:
+            -
+          team_breakthroughs:
+            -
+          recommended_next_actions:
+            -
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        params:
+          temperature: 0.1
+        tooling: []
+        thinking: null
+        memories: []
+        skills: null
+        retry: null
+      description: Produces the collaborative final brief.
+      context_window: -1
+      log_output: true
+  edges:
+    - from: START
+      to: Mission Manager
+    - from: Mission Manager
+      to: Context Manager
+    - from: Context Manager
+      to: Knowledge Broker
+    - from: Knowledge Broker
+      to: Recon Agent
+    - from: Knowledge Broker
+      to: Surface Vulnerability Analyst
+    - from: Knowledge Broker
+      to: Team Coordinator
+    - from: Recon Agent
+      to: Team Coordinator
+    - from: Surface Vulnerability Analyst
+      to: Team Coordinator
+    - from: Team Coordinator
+      to: Attack Path Agent
+    - from: Team Coordinator
+      to: Execution Planner
+    - from: Attack Path Agent
+      to: Hallucination Auditor
+    - from: Execution Planner
+      to: Hallucination Auditor
+    - from: Hallucination Auditor
+      to: Revision Coordinator
+    - from: Revision Coordinator
+      to: Final Synthesizer
+  start:
+    - START
+  end:
+    - Final Synthesizer
+  initial_instruction: ''
