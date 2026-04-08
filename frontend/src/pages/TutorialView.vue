@@ -7,7 +7,7 @@ import markdownItAnchor from 'markdown-it-anchor'
 const route = useRoute()
 
 const renderedContent = ref('')
-const currentLang = ref('en') // 'zh' for Chinese, 'en' for English
+const currentLang = ref('en')
 const markdownBody = ref(null)
 const md = new MarkdownIt({
   html: true,
@@ -32,13 +32,10 @@ md.use(markdownItAnchor, {
 const getTutorialFile = () => (currentLang.value === 'en' ? '/tutorial-en.md' : '/tutorial-zh.md')
 
 const scrollToHash = () => {
-  // Wait for DOM to update, then scroll to hash if present
   nextTick(() => {
     if (route.hash) {
-      // Remove the '#' from the hash
       const targetId = route.hash.slice(1)
       const targetElement = document.getElementById(targetId)
-      
       if (targetElement) {
         setTimeout(() => {
           targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -83,12 +80,8 @@ const loadTutorial = async () => {
     const response = await fetch(getTutorialFile())
     if (response.ok) {
       let text = await response.text()
-      // Fix media paths to point to /media/ (absolute path from public root)
-      // For markdown images: ![alt](media/file.png) -> ![alt](/media/file.png)
       text = text.replace(/\]\(media\//g, '](/media/')
-      // For HTML image tags: src="media/file.gif" -> src="/media/file.gif"
       text = text.replace(/src="media\//g, 'src="/media/')
-      
       renderedContent.value = md.render(text)
       addCopyButtons()
       scrollToHash()
@@ -114,84 +107,110 @@ onMounted(() => {
 
 <template>
   <div class="tutorial-view">
-    <div class="lang-switch">
-      <button :class="{ active: currentLang === 'zh' }" @click="switchLang('zh')">中文</button>
-      <button :class="{ active: currentLang === 'en' }" @click="switchLang('en')">English</button>
+    <div class="tutorial-shell">
+      <div class="tutorial-header">
+        <div>
+          <div class="eyebrow">🌸 Gentle Guide</div>
+          <h1>MyLittleAgent Tutorial</h1>
+          <p>Walk through the platform in a softer, calmer workspace.</p>
+        </div>
+        <div class="lang-switch">
+          <button :class="{ active: currentLang === 'zh' }" @click="switchLang('zh')">中文</button>
+          <button :class="{ active: currentLang === 'en' }" @click="switchLang('en')">English</button>
+        </div>
+      </div>
+      <div ref="markdownBody" class="markdown-body" v-html="renderedContent"></div>
     </div>
-    <div ref="markdownBody" class="markdown-body" v-html="renderedContent"></div>
   </div>
 </template>
 
 <style scoped>
 .tutorial-view {
-  padding: 40px;
+  padding: 26px;
   width: 100%;
   max-width: 100%;
   margin: 0 auto;
-  height: calc(100vh - 55px); /* Adjust the height of the .sidebar */
-  background: linear-gradient(135deg, #232526 0%, #1e1e1e 100%);
+  min-height: calc(100vh - 62px);
+  background: transparent;
   overflow-y: auto;
   overflow-x: hidden;
   box-sizing: border-box;
-  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  /* Glowing border and card shadow */
-  border-radius: 18px;
-  box-shadow: 0 4px 32px 0 rgba(0, 255, 255, 0.08), 0 0 0 2px #00eaff33;
-  border: 1.5px solid #00eaff33;
-  transition: box-shadow 0.3s, height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   scroll-behavior: smooth;
 }
 
-:global(body.nav-hidden .tutorial-view) {
-  height: 100vh;
+.tutorial-shell {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.tutorial-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+  padding: 24px;
+  border-radius: 24px;
+  background: rgba(255, 250, 252, 0.74);
+  border: 1px solid rgba(223, 156, 185, 0.18);
+  box-shadow: 0 18px 44px rgba(212, 142, 175, 0.14);
+  backdrop-filter: blur(14px);
+}
+
+.eyebrow {
+  color: #b25c82;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.tutorial-header h1 {
+  margin: 0 0 8px;
+  font-size: 32px;
+  color: #5b3041;
+}
+
+.tutorial-header p {
+  margin: 0;
+  color: #876473;
 }
 
 .lang-switch {
-  position: absolute;
-  top: 80px; /* 55px nav + 25px spacing */
-  right: 48px;
   z-index: 10;
   display: flex;
   gap: 12px;
-  transition: top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-:global(body.nav-hidden .lang-switch) {
-  top: 25px; /* Adjust to 25px spacing from top of screen when nav is hidden */
-}
 .lang-switch button {
-  background: linear-gradient(90deg, #232526 60%, #00eaff22 100%);
-  color: #00eaff;
-  border: 1.5px solid #00eaff33;
-  border-radius: 8px;
-  padding: 6px 18px;
-  font-size: 1em;
-  font-family: inherit;
+  background: linear-gradient(90deg, #fff8fb, #ffe8f3);
+  color: #b05c81;
+  border: 1px solid rgba(223, 156, 185, 0.25);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 0.95em;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s, border 0.2s, box-shadow 0.2s;
-  box-shadow: 0 2px 8px #00eaff11;
+  transition: all 0.2s ease;
 }
+
 .lang-switch button.active,
 .lang-switch button:hover {
-  background: linear-gradient(90deg, #00eaff 0%, #232526 100%);
-  color: #fff;
-  border: 1.5px solid #00eaff;
-  box-shadow: 0 0 12px #00eaff44;
+  background: linear-gradient(90deg, #ffd6e6, #f0d7ff, #ffc4de);
+  color: #5e3346;
+  box-shadow: 0 10px 20px rgba(220, 143, 175, 0.16);
 }
 
 :deep(.markdown-body) {
   max-width: 980px;
   margin: 0 auto;
-  color: #e0e0e0;
-  font-family: 'JetBrains Mono', 'Fira Mono', 'Consolas', 'Menlo', 'Monaco', 'monospace', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  line-height: 1.7;
-  letter-spacing: 0.01em;
-  background: rgba(30,34,40,0.85);
-  border-radius: 14px;
-  box-shadow: 0 2px 16px 0 rgba(0,255,255,0.04);
-  padding: 32px 36px 32px 36px;
-  border: 1px solid #00eaff22;
-  backdrop-filter: blur(2px);
+  color: #5a3b47;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  line-height: 1.75;
+  background: rgba(255, 251, 253, 0.82);
+  border-radius: 20px;
+  box-shadow: 0 18px 44px rgba(212, 142, 175, 0.12);
+  padding: 32px 36px;
+  border: 1px solid rgba(223, 156, 185, 0.16);
+  backdrop-filter: blur(10px);
 }
 
 :deep(.markdown-body h1),
@@ -202,86 +221,65 @@ onMounted(() => {
 :deep(.markdown-body h6) {
   margin-top: 24px;
   margin-bottom: 16px;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.25;
-  color: #00eaff;
-  text-shadow: 0 0 8px #00eaff44;
-  letter-spacing: 0.02em;
-  scroll-margin-top: 20px; /* Offset for hash scroll target */
-  transition: background 0.3s ease;
+  color: #b35e84;
+  scroll-margin-top: 20px;
 }
 
-/* Highlight targeted heading */
 :deep(.markdown-body h1:target),
 :deep(.markdown-body h2:target),
 :deep(.markdown-body h3:target),
 :deep(.markdown-body h4:target),
 :deep(.markdown-body h5:target),
 :deep(.markdown-body h6:target) {
-  background: rgba(0, 234, 255, 0.15);
+  background: rgba(255, 224, 236, 0.8);
   padding: 8px 12px;
   margin-left: -12px;
   margin-right: -12px;
-  border-radius: 6px;
-  box-shadow: 0 0 16px rgba(0, 234, 255, 0.3);
+  border-radius: 10px;
 }
 
-:deep(.markdown-body h1) { font-size: 2.2em; border-bottom: 1px solid #00eaff33; padding-bottom: 0.3em; }
-:deep(.markdown-body h2) { font-size: 1.6em; border-bottom: 1px solid #00eaff22; padding-bottom: 0.3em; }
+:deep(.markdown-body h1) { font-size: 2.2em; border-bottom: 1px solid rgba(223, 156, 185, 0.24); padding-bottom: 0.3em; }
+:deep(.markdown-body h2) { font-size: 1.6em; border-bottom: 1px solid rgba(223, 156, 185, 0.16); padding-bottom: 0.3em; }
 :deep(.markdown-body h3) { font-size: 1.3em; }
 
 :deep(.markdown-body p) {
   margin-top: 0;
   margin-bottom: 16px;
-  color: #b8eaff;
-  font-size: 1.08em;
+  color: #6f4d5c;
+  font-size: 1.05em;
 }
 
 :deep(.markdown-body a) {
-  color: #00eaff;
+  color: #c0618c;
   text-decoration: none;
-  border-bottom: 1px dashed #00eaff99;
-  transition: color 0.2s, border-bottom 0.2s;
-}
-:deep(.markdown-body a:hover) {
-  color: #fff;
-  border-bottom: 1px solid #00eaff;
-  text-shadow: 0 0 6px #00eaff99;
+  border-bottom: 1px dashed rgba(192, 97, 140, 0.5);
 }
 
-:deep(.markdown-body img) {
+:deep(.markdown-body a:hover) {
+  color: #9f456d;
+  border-bottom: 1px solid rgba(159, 69, 109, 0.7);
+}
+
+:deep(.markdown-body img),
+:deep(.markdown-body video) {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  background-color: transparent;
-  border-radius: 10px;
-  border: 1.5px solid #00eaff33;
-  box-shadow: 0 2px 16px 0 #00eaff22;
+  border-radius: 14px;
+  border: 1px solid rgba(223, 156, 185, 0.18);
+  box-shadow: 0 12px 28px rgba(212, 142, 175, 0.12);
   margin: 16px 0;
-  transition: box-shadow 0.2s;
-}
-:deep(.markdown-body img:hover) {
-  box-shadow: 0 0 24px 2px #00eaff88;
-}
-
-:deep(.markdown-body video) {
-  max-width: 100%;
-  border-radius: 10px;
-  border: 1.5px solid #00eaff33;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 16px 0 #00eaff22;
 }
 
 :deep(.markdown-body code) {
   padding: 0.2em 0.5em;
-  margin: 0;
   font-size: 90%;
-  background: linear-gradient(90deg, #232526 60%, #00eaff22 100%);
-  border-radius: 6px;
-  color: #00eaff;
-  font-family: 'JetBrains Mono', 'Fira Mono', 'Consolas', 'Menlo', 'Monaco', 'monospace';
-  border: 1px solid #00eaff33;
-  box-shadow: 0 0 8px #00eaff22;
+  background: rgba(255, 237, 245, 0.8);
+  border-radius: 8px;
+  color: #b25c82;
+  border: 1px solid rgba(223, 156, 185, 0.16);
 }
 
 :deep(.markdown-body pre) {
@@ -289,11 +287,10 @@ onMounted(() => {
   overflow: auto;
   font-size: 95%;
   line-height: 1.55;
-  background: linear-gradient(90deg, #161b22 80%, #00eaff11 100%);
-  border-radius: 10px;
+  background: rgba(255, 244, 249, 0.92);
+  border-radius: 14px;
   margin-bottom: 18px;
-  border: 1.5px solid #00eaff33;
-  box-shadow: 0 0 16px #00eaff11;
+  border: 1px solid rgba(223, 156, 185, 0.18);
   position: relative;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -303,14 +300,9 @@ onMounted(() => {
   display: inline;
   padding: 0;
   margin: 0;
-  overflow: visible;
-  line-height: inherit;
-  word-wrap: normal;
   background: transparent;
   border: 0;
-  color: #00eaff;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  color: #8f4f6a;
 }
 
 :deep(.markdown-body pre.has-copy-button) {
@@ -321,90 +313,61 @@ onMounted(() => {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: linear-gradient(90deg, #232526 60%, #00eaff22 100%);
-  color: #00eaff;
-  border: 1px solid #00eaff44;
-  border-radius: 6px;
-  padding: 4px 10px;
+  background: linear-gradient(90deg, #fff8fb, #ffe8f3);
+  color: #b05c81;
+  border: 1px solid rgba(223, 156, 185, 0.22);
+  border-radius: 999px;
+  padding: 5px 12px;
   font-size: 0.85em;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s, border 0.2s, box-shadow 0.2s;
-  box-shadow: 0 2px 8px #00eaff11;
-}
-
-:deep(.markdown-body .copy-code-btn:hover) {
-  background: linear-gradient(90deg, #00eaff 0%, #232526 100%);
-  color: #fff;
-  border: 1px solid #00eaff;
-  box-shadow: 0 0 12px #00eaff44;
 }
 
 :deep(.markdown-body blockquote) {
   padding: 0 1em;
-  color: #8bffe6;
-  border-left: 0.25em solid #00eaff99;
+  color: #8e6576;
+  border-left: 0.25em solid rgba(223, 156, 185, 0.6);
   margin: 0 0 16px 0;
-  background: rgba(0,234,255,0.04);
-  border-radius: 6px;
+  background: rgba(255, 241, 246, 0.75);
+  border-radius: 10px;
 }
 
 :deep(.markdown-body hr) {
   height: 0.25em;
-  padding: 0;
   margin: 24px 0;
-  background: linear-gradient(90deg, #00eaff33 0%, #232526 100%);
+  background: linear-gradient(90deg, rgba(223, 156, 185, 0.35) 0%, rgba(255, 245, 249, 0) 100%);
   border: 0;
-  border-radius: 2px;
+  border-radius: 999px;
 }
 
 :deep(.markdown-body table) {
   border-spacing: 0;
   border-collapse: collapse;
-  margin-top: 0;
   margin-bottom: 16px;
   width: 100%;
   overflow: auto;
-  background: rgba(0,234,255,0.02);
-  border-radius: 8px;
+  background: rgba(255, 246, 250, 0.65);
+  border-radius: 10px;
 }
 
 :deep(.markdown-body table th),
 :deep(.markdown-body table td) {
   padding: 8px 15px;
-  border: 1px solid #00eaff22;
+  border: 1px solid rgba(223, 156, 185, 0.18);
 }
 
 :deep(.markdown-body table th) {
   font-weight: 700;
-  background: rgba(0,234,255,0.08);
-  color: #00eaff;
+  background: rgba(255, 231, 240, 0.7);
+  color: #b35e84;
 }
 
-:deep(.markdown-body table tr) {
-  background: rgba(30,34,40,0.7);
-  border-top: 1px solid #00eaff11;
-}
+@media (max-width: 900px) {
+  .tutorial-header {
+    flex-direction: column;
+  }
 
-:deep(.markdown-body table tr:nth-child(2n)) {
-  background: rgba(0,234,255,0.03);
-}
-
-/* Custom Scrollbar */
-.tutorial-view::-webkit-scrollbar {
-  width: 10px;
-  background: #232526;
-}
-.tutorial-view::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #00eaff 0%, #232526 100%);
-  border-radius: 8px;
-}
-
-:deep(.markdown-body::-webkit-scrollbar) {
-  height: 8px;
-  background: #232526;
-}
-:deep(.markdown-body::-webkit-scrollbar-thumb) {
-  background: linear-gradient(90deg, #00eaff 0%, #232526 100%);
-  border-radius: 8px;
+  .lang-switch {
+    width: 100%;
+  }
 }
 </style>

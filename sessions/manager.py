@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional
 from entity.messages import Message, MessageRole
 from events.models import EventRecord, EventType
 from sessions.message_store import SessionMessageStore
-from sessions.models import SessionRecord, SessionStatus
+from sessions.models import PendingHumanRequest, SessionRecord, SessionStatus
 from sessions.store import SessionStore
 
 
@@ -130,12 +130,43 @@ class SessionManager:
         ))
 
     def mark_waiting_for_human(self, session_id: str, node_id: str, task_description: str, inputs: Optional[str] = None) -> SessionRecord | None:
-        record = self.update_session(session_id, status=SessionStatus.WAITING_FOR_HUMAN, current_agent_id=node_id, current_node_id=node_id)
+        pending = PendingHumanRequest(
+            node_id=node_id,
+            task_description=task_description,
+            inputs=inputs,
+        )
+        record = self.update_session(
+            session_id,
+            status=SessionStatus.WAITING_FOR_HUMAN,
+            current_agent_id=node_id,
+            current_node_id=node_id,
+            pending_human_request=pending,
+        )
         if record:
             _get_event_bus().emit(EventRecord(
                 session_id=session_id,
                 type=EventType.AGENT_WAITING_FOR_HUMAN,
                 source=node_id,
-                payload={"node_id": node_id, "task_description": task_description, "inputs": inputs},
+                payload={
+                    "request_id": pending.request_id,
+                    "node_id": node_id,
+                    "task_description": task_description,
+                    "inputs": inputs,
+                },
             ))
         return record
+
+    def answer_pending_request(self, session_id: str, text: str, metadata: Optional[Dict[str, Any]] = None) -> SessionRecord | None:
+        record = self.store.load_session(session_id)
+        if record is None:
+            return None
+        pending = record.pending_human_request
+        if pending is None:
+            return record
+        pending.status = "answered"
+        self.record_human_message(session_id, pending.node_id, text, metadata=metadata)
+        record.status = SessionStatus.RESUMING
+        record.pending_human_request = None
+        record.updated_at = datetime.now(timezone.utc)
+        saved = self.store.save_session(record)
+        return self.update_session(saved.session_id, status=SessionStatus.RUNNING)

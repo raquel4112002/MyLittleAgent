@@ -3,62 +3,57 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-const goToTutorial = () => {
-  router.push('/tutorial')
+const goToMonitor = () => {
+  router.push('/observability')
 }
 
-const cubeColors = ['#aaffcd', '#99eaf9', '#a0c4ff']
-const cubes = Array.from({ length: 80 }, (_, i) => ({
+const petals = Array.from({ length: 26 }, (_, i) => ({
   id: i,
   left: `${Math.random() * 100}%`,
   top: `${Math.random() * 100}%`,
-  size: `${Math.random() * 10 + 4}px`, // Wider size range
-  color: cubeColors[Math.floor(Math.random() * cubeColors.length)],
-  duration: `${Math.random() * 30 + 40}s`, // 30-60 seconds
-  delay: `-${Math.random() * 60}s`, // Staggered delays
-  blur: `${Math.random() * 2 + 1}px`, // Add blur
-  opacity: Math.random() * 0.4 + 0.2, // Add opacity variation
-  rotate: `${Math.random() * 360}deg`, // Add initial rotation
-  scale: Math.random() * 1 + 0.7 // Add scale variation
+  size: `${Math.random() * 22 + 10}px`,
+  delay: `-${Math.random() * 18}s`,
+  duration: `${Math.random() * 18 + 20}s`,
+  rotate: `${Math.random() * 360}deg`,
+  opacity: Math.random() * 0.4 + 0.25,
 }))
 </script>
 
 <template>
   <div class="home-view">
-    <div class="cubes-background">
-      <div 
-        v-for="cube in cubes" 
-        :key="cube.id"
-        class="cube"
+    <div class="petals-layer">
+      <div
+        v-for="petal in petals"
+        :key="petal.id"
+        class="petal"
         :style="{
-          left: cube.left,
-          top: cube.top,
-          width: cube.size,
-          height: cube.size,
-          backgroundColor: cube.color,
-          boxShadow: `0 0 12px 2px ${cube.color}, 0 0 24px 4px ${cube.color}99`,
-          animationDuration: cube.duration,
-          animationDelay: cube.delay,
-          filter: `blur(${cube.blur})`,
-          opacity: cube.opacity,
-          '--rotate': cube.rotate,
-          '--scale': cube.scale
+          left: petal.left,
+          top: petal.top,
+          width: petal.size,
+          height: petal.size,
+          animationDelay: petal.delay,
+          animationDuration: petal.duration,
+          opacity: petal.opacity,
+          '--rotate': petal.rotate,
         }"
-      ></div>
+      />
     </div>
+
     <div class="content-wrapper">
+      <div class="hero-badge">🌸 Soft Ops Mode</div>
       <h1 class="title">
         <span class="title-line">MyLittleAgent</span>
-        <span class="title-line title-highlight">Control Center</span>
+        <span class="title-line title-highlight">Cherry Bloom Console</span>
       </h1>
-      
+
       <p class="introduction">
-        MyLittleAgent is a multi-agent control center for designing, observing, and running collaborative agent workflows with room for live human interaction.
+        A softer command center for multi-agent workflows — designed for visibility, collaboration,
+        and gentle control while your agents work.
       </p>
 
       <div class="actions">
-        <button class="btn get-started-btn" @click="goToTutorial">
-          Get Started →
+        <button class="btn primary-btn" @click="goToMonitor">
+          Open Monitor ✨
         </button>
       </div>
     </div>
@@ -68,8 +63,11 @@ const cubes = Array.from({ length: 80 }, (_, i) => ({
 <style scoped>
 .home-view {
   width: 100%;
-  min-height: calc(100vh - 55px); /* Match sidebar height to avoid bottom gap */
-  background-color: #1a1a1a;
+  min-height: calc(100vh - 62px);
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255, 214, 230, 0.75), transparent 0 28%),
+    radial-gradient(circle at 82% 18%, rgba(255, 235, 244, 0.72), transparent 0 30%),
+    linear-gradient(180deg, #fff9fc 0%, #fff1f6 48%, #ffe8f1 100%);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -80,122 +78,30 @@ const cubes = Array.from({ length: 80 }, (_, i) => ({
   overflow: hidden;
 }
 
-.cubes-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Animated gradient overlay */
-.cubes-background::before {
-  content: '';
+.petals-layer {
   position: absolute;
   inset: 0;
-  background: radial-gradient(1200px 600px at 20% 30%, rgba(170, 255, 205, 0.15), transparent 60%),
-              radial-gradient(1000px 500px at 80% 70%, rgba(160, 196, 255, 0.15), transparent 60%),
-              linear-gradient(90deg, rgba(170,255,205,0.08), rgba(153,234,249,0.08), rgba(160,196,255,0.08));
-  filter: blur(2px);
-  animation: bgFlow 18s ease-in-out infinite;
+  pointer-events: none;
 }
 
-@keyframes bgFlow {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1);
-    opacity: 0.8;
-  }
-  50% {
-    transform: translate3d(-2%, 1%, 0) scale(1.02);
-    opacity: 1;
-  }
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-    opacity: 0.8;
-  }
-}
-
-.cube {
+.petal {
   position: absolute;
-  border-radius: 4px;
-  transition: filter 0.3s, opacity 0.3s, transform 0.3s;
-  animation: unifiedCubeAnim 18s linear infinite;
-  will-change: transform, opacity, filter;
-  /* Combined transform: initial angle and scale come from CSS variables */
-  --rotate: 0deg;
-  --scale: 1;
+  border-radius: 65% 35% 70% 30%;
+  background: linear-gradient(180deg, rgba(255, 202, 222, 0.9), rgba(255, 168, 203, 0.6));
+  box-shadow: 0 6px 14px rgba(230, 147, 185, 0.18);
+  animation: drift 18s linear infinite;
+  transform: rotate(var(--rotate));
 }
 
-.cube:hover {
-  filter: blur(0.5px) brightness(1.3) drop-shadow(0 0 8px #fff8);
-  opacity: 0.7;
-  transform: scale(1.2) rotate(10deg) !important;
-  z-index: 2;
-}
-
-@keyframes unifiedCubeAnim {
-  0% {
-    opacity: 0.1;
-    transform:
-      translate3d(0, 0, 0)
-      rotate(var(--rotate, 0deg))
-      scale(var(--scale, 1));
-  }
-  20% {
-    opacity: 0.3;
-    transform:
-      translate3d(10px, -20px, 0)
-      rotate(calc(var(--rotate, 0deg) + 72deg))
-      scale(calc(var(--scale, 1) * 1.05));
-  }
-  40% {
-    opacity: 0.5;
-    transform:
-      translate3d(-20px, 60px, 0)
-      rotate(calc(var(--rotate, 0deg) + 144deg))
-      scale(calc(var(--scale, 1) * 1.1));
-  }
-  60% {
-    opacity: 0.4;
-    transform:
-      translate3d(50px, 30px, 0)
-      rotate(calc(var(--rotate, 0deg) + 216deg))
-      scale(calc(var(--scale, 1) * 0.95));
-  }
-  80% {
-    opacity: 0.3;
-    transform:
-      translate3d(-30px, -40px, 0)
-      rotate(calc(var(--rotate, 0deg) + 288deg))
-      scale(calc(var(--scale, 1) * 1.08));
-  }
-  100% {
-    opacity: 0.1;
-    transform:
-      translate3d(0, 0, 0)
-      rotate(calc(var(--rotate, 0deg) + 360deg))
-      scale(var(--scale, 1));
-  }
-}
-
-/* Background cubes drift slowly */
 @keyframes drift {
   0% {
-    transform: translate3d(0, 0, 0);
-  }
-  25% {
-    transform: translate3d(2px, -2px, 0);
+    transform: translate3d(0, 0, 0) rotate(var(--rotate));
   }
   50% {
-    transform: translate3d(-2px, 6px, 0);
-  }
-  75% {
-    transform: translate3d(5px, 3px, 0);
+    transform: translate3d(-22px, 35px, 0) rotate(calc(var(--rotate) + 120deg));
   }
   100% {
-    transform: translate3d(0, 0, 0);
+    transform: translate3d(18px, 90px, 0) rotate(calc(var(--rotate) + 240deg));
   }
 }
 
@@ -207,13 +113,30 @@ const cubes = Array.from({ length: 80 }, (_, i) => ({
   align-items: center;
   position: relative;
   z-index: 1;
+  background: rgba(255, 250, 252, 0.72);
+  border: 1px solid rgba(226, 162, 189, 0.26);
+  border-radius: 30px;
+  padding: 42px 34px;
+  box-shadow: 0 26px 60px rgba(215, 143, 175, 0.18);
+  backdrop-filter: blur(12px);
+}
+
+.hero-badge {
+  margin-bottom: 18px;
+  background: rgba(255, 239, 246, 0.95);
+  border: 1px solid rgba(231, 143, 179, 0.28);
+  color: #ae5a80;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .title {
-  font-size: 76px;
+  font-size: 72px;
   font-weight: 900;
-  line-height: 1.25;
-  margin: 0 0 24px 0;
+  line-height: 1.12;
+  margin: 0 0 22px 0;
   letter-spacing: -1.5px;
   display: flex;
   flex-direction: column;
@@ -221,27 +144,22 @@ const cubes = Array.from({ length: 80 }, (_, i) => ({
 }
 
 .title-line {
-  color: #f2f2f2;
+  color: #593444;
 }
 
 .title-highlight {
-  background: linear-gradient(
-    90deg,
-    #aaffcd,
-    #99eaf9,
-    #a0c4ff
-  );
+  background: linear-gradient(90deg, #e78fb3, #d39ef8, #ffb7d5);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .introduction {
-  font-size: 22px;
-  color: rgba(235, 235, 235, 0.6);
-  line-height: 1.5;
-  max-width: 700px;
-  margin: 0 auto 40px;
+  font-size: 21px;
+  color: #7e5a68;
+  line-height: 1.6;
+  max-width: 720px;
+  margin: 0 auto 34px;
 }
 
 .actions {
@@ -252,64 +170,34 @@ const cubes = Array.from({ length: 80 }, (_, i) => ({
 
 .btn {
   border: none;
-  padding: 14px 32px;
+  padding: 14px 28px;
   font-size: 16px;
-  font-weight: 600;
-  border-radius: 50px;
+  font-weight: 700;
+  border-radius: 999px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
 }
 
-.secondary-btn {
-  background-color: #2f2f2f;
-  color: #f2f2f2;
+.primary-btn {
+  color: #5b2a3e;
+  background: linear-gradient(90deg, #ffd6e6, #f0d7ff, #ffc4de);
+  box-shadow: 0 16px 30px rgba(226, 150, 182, 0.22);
 }
 
-.secondary-btn:hover {
-  background-color: #3a3a3a;
-  transition: all 0.3s ease;
-}
-
-.get-started-btn {
-  color: #1a1a1a;
-  background: linear-gradient(
-    90deg,
-    #aaffcd,
-    #99eaf9,
-    #a0c4ff
-  );
-  animation: gradientShift 4s ease-in-out infinite;
-  background-size: 200% 100%;
-  position: relative;
-  z-index: 1;
-}
-
-.get-started-btn:hover {
+.primary-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-}
-
-@keyframes gradientShift {
-  0%, 100% {
-    background-position: 0% 0%;
-  }
-  50% {
-    background-position: 100% 0%;
-  }
 }
 
 @media (max-width: 768px) {
   .title {
     font-size: 42px;
   }
-  
+
   .introduction {
     font-size: 18px;
   }
-  
-  .actions {
-    flex-direction: column;
+
+  .content-wrapper {
+    padding: 28px 22px;
   }
 }
 </style>

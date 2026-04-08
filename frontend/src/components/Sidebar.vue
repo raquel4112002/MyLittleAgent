@@ -1,16 +1,17 @@
 <template>
     <div class="sidebar" :class="{ 'is-hidden': isHidden }" @mouseenter="isHidden = false">
+        <div class="brand-mark">🌸 MyLittleAgent</div>
 
         <nav class="sidebar-nav">
             <router-link to="/">Home</router-link>
-            <router-link to="/tutorial">Tutorial</router-link>
+            <router-link to="/tutorial">Guide</router-link>
             <router-link
                 to="/workflows"
                 :class="{ active: isWorkflowsActive }"
             >Workflows</router-link>
             <router-link to="/observability">Monitor</router-link>
             <router-link to="/launch" target="_blank" rel="noopener">Launch</router-link>
-            <router-link to="/batch-run" target="_blank" rel="noopener">Labaratory</router-link>
+            <router-link to="/batch-run" target="_blank" rel="noopener">Lab</router-link>
         </nav>
         <div class="sidebar-actions">
             <button class="settings-nav-btn" @click="showSettingsModal = true" title="Settings">
@@ -29,8 +30,8 @@
 </template>
 
 <script setup>
-import { RouterLink, useRoute } from 'vue-router'
-import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { computed, ref, onUnmounted, watch } from 'vue'
 import SettingsModal from './SettingsModal.vue'
 
 const showSettingsModal = ref(false)
@@ -49,59 +50,60 @@ const isWorkflowsActive = computed(() => route.path.startsWith('/workflows'))
 
 let lastScrollY = 0
 const handleScroll = (e) => {
-    const currentScrollY = e.target.scrollTop || window.scrollY || 0;
-    // Minimize small scroll jitters
-    if (Math.abs(currentScrollY - lastScrollY) < 5) return;
+    const currentScrollY = e.target.scrollTop || window.scrollY || 0
+    if (Math.abs(currentScrollY - lastScrollY) < 5) return
 
-    // Scrolling down -> hide (if past slight threshold). Scrolling up -> show
     if (currentScrollY > lastScrollY && currentScrollY > 10) {
-        isHidden.value = true;
+        isHidden.value = true
     } else if (currentScrollY < lastScrollY) {
-        isHidden.value = false;
+        isHidden.value = false
     }
-    lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
+    lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY
 }
 
 const toggleScrollListener = (shouldListen) => {
     if (shouldListen) {
-        window.addEventListener('scroll', handleScroll, true);
+        window.addEventListener('scroll', handleScroll, true)
     } else {
-        window.removeEventListener('scroll', handleScroll, true);
-        isHidden.value = false; // Reset state when leaving
+        window.removeEventListener('scroll', handleScroll, true)
+        isHidden.value = false
     }
 }
 
 watch(() => route.path, () => {
-    toggleScrollListener(!!route.meta.hideNavOnScroll);
-}, { immediate: true }) // immediate: true runs this once on mount
+    toggleScrollListener(!!route.meta.hideNavOnScroll)
+}, { immediate: true })
 
 onUnmounted(() => {
-    toggleScrollListener(false);
-    document.body.classList.remove('nav-hidden');
+    toggleScrollListener(false)
+    document.body.classList.remove('nav-hidden')
 })
 </script>
 
 <style scoped>
 .sidebar {
     width: 100%;
-    background-color: #1a1a1a;
-    padding: 0 24px 0 0;
+    background: rgba(255, 249, 252, 0.78);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 0 24px;
     box-sizing: border-box;
     display: flex;
     align-items: center;
-    height: 55px;
+    height: 62px;
     position: sticky;
     top: 0;
     z-index: 100;
-    border-bottom: 1px solid #4d4d4d;
+    border-bottom: 1px solid rgba(223, 156, 185, 0.22);
     justify-content: center;
     transition: margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     margin-top: 0;
     transform: translateY(0);
+    box-shadow: 0 10px 28px rgba(211, 143, 176, 0.12);
 }
 
 .sidebar.is-hidden {
-    margin-top: -55px;
+    margin-top: -62px;
     transform: translateY(-100%);
 }
 
@@ -112,6 +114,21 @@ onUnmounted(() => {
     width: 100%;
     height: 25px;
     z-index: 99;
+}
+
+.brand-mark {
+    position: absolute;
+    left: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    color: #a14d73;
+}
+
+.brand-mark::after {
+    content: ' ✨';
 }
 
 .sidebar-actions {
@@ -126,53 +143,76 @@ onUnmounted(() => {
     flex-direction: row;
     gap: 24px;
     align-items: center;
-    /* Remove auto margins to let flexbox center it if parent has justify-content: center */
-    /* But since we just added justify-content: center to sidebar, we don't strictly need auto margins, 
-       but they don't hurt if we want to be safe. */
     margin-left: auto;
     margin-right: auto;
 }
 
 .sidebar-nav a {
     text-decoration: none;
-    color: #8e8e8e;
-    font-weight: 500;
+    color: #8e6374;
+    font-weight: 600;
     font-size: 14px;
     font-family: 'Inter', sans-serif;
-    transition: color 0.2s ease;
+    transition: color 0.2s ease, transform 0.18s ease;
 }
 
 .sidebar-nav a:hover {
-    color: #f2f2f2;
+    color: #b85f88;
+    transform: translateY(-1px);
 }
 
 .sidebar-nav a.router-link-active,
 .sidebar-nav a.active {
     background: linear-gradient(
-    90deg,
-    #aaffcd,
-    #99eaf9,
-    #a0c4ff
+      90deg,
+      #e78fb3,
+      #d39ef8,
+      #ffb7d5
     );
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    -webkit-text-fill-color: transparent;
 }
 
 .settings-nav-btn {
-  background: transparent;
-  border: none;
-  color: #8e8e8e;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(223, 156, 185, 0.24);
+  color: #9d5c79;
   cursor: pointer;
-  padding: 4px;
+  padding: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.2s ease;
+  transition: color 0.2s ease, background 0.2s ease;
 }
 
 .settings-nav-btn:hover {
-  color: #f2f2f2;
+  color: #c35a8b;
+  background: rgba(255, 245, 249, 0.95);
+}
+
+@media (max-width: 900px) {
+  .brand-mark {
+    display: none;
+  }
+
+  .sidebar-nav {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 720px) {
+  .sidebar {
+    justify-content: flex-start;
+    padding-right: 68px;
+  }
+
+  .sidebar-nav {
+    overflow-x: auto;
+    width: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+    margin-right: 0;
+  }
 }
 </style>

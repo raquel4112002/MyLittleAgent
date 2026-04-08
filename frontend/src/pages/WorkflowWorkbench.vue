@@ -1,6 +1,6 @@
 <template>
   <div class="workflow-workbench">
-    <div class="workflow-sidebar" :class="{ open: isSidebarOpen }">
+    <div class="workflow-sidebar sakura-panel" :class="{ open: isSidebarOpen }">
       <WorkflowList
         ref="workflowListRef"
         :use-routing="false"
@@ -8,11 +8,10 @@
         @select="handleSelect"
       />
     </div>
-    <!-- Sidebar toggle button, positioned next to the sidebar -->
-    <button 
-      class="sidebar-toggle-btn" 
+    <button
+      class="sidebar-toggle-btn"
       :class="{ 'sidebar-open': isSidebarOpen }"
-      @click="handleToggleSidebar" 
+      @click="handleToggleSidebar"
       aria-label="Toggle sidebar"
     >
       <span v-if="isSidebarOpen">‹</span>
@@ -25,9 +24,10 @@
         :key="selectedWorkflow"
         @refresh-workflows="handleRefreshWorkflows"
       />
-      <div v-else class="placeholder">
-        <div class="placeholder-title"> Select a workflow</div>
-        <div class="placeholder-subtitle">Choose a workflow from the list to view or edit.</div>
+      <div v-else class="placeholder sakura-panel">
+        <div class="placeholder-eyebrow">🌸 Workflow Garden</div>
+        <div class="placeholder-title">Select a workflow</div>
+        <div class="placeholder-subtitle">Choose a workflow from the list to view, edit, and evolve it.</div>
       </div>
     </div>
   </div>
@@ -71,8 +71,6 @@ onBeforeUnmount(() => {
 const handleSelect = (name) => {
   const normalized = normalizeName(name)
   selectedWorkflow.value = normalized
-
-  // Minimize sidebar when an entry is selected
   isSidebarOpen.value = false
   window.dispatchEvent(new CustomEvent('workflow-sidebar-state', { detail: { open: isSidebarOpen.value } }))
 
@@ -84,7 +82,6 @@ const handleSelect = (name) => {
 }
 
 const handleRefreshWorkflows = async () => {
-  // Reload workflows in WorkflowList
   if (workflowListRef.value?.loadWorkflows) {
     await workflowListRef.value.loadWorkflows()
   }
@@ -95,10 +92,18 @@ const handleRefreshWorkflows = async () => {
 .workflow-workbench {
   position: relative;
   display: flex;
-  height: calc(100vh - 55px);
-  background-color: #1a1a1a;
-  color: #f2f2f2;
+  height: calc(100vh - 62px);
+  background: transparent;
+  color: #5b3446;
   overflow: hidden;
+}
+
+.sakura-panel {
+  background: rgba(255, 250, 252, 0.76);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(223, 156, 185, 0.18);
+  box-shadow: 0 18px 44px rgba(212, 142, 175, 0.12);
 }
 
 .workflow-sidebar {
@@ -110,58 +115,52 @@ const handleRefreshWorkflows = async () => {
   transform: translateX(calc(-100% + 10px));
   transition: transform 0.35s cubic-bezier(.77,.2,.05,1.0);
   z-index: 3;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  background-color: #161616;
+  border-right: 1px solid rgba(223, 156, 185, 0.14);
   overflow-y: auto;
   overflow-x: hidden;
-  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.35);
+  border-radius: 0 22px 22px 0;
 }
+
 .workflow-sidebar.open {
   transform: translateX(0);
 }
 
-/* Sidebar toggle button - positioned next to the sidebar */
 .sidebar-toggle-btn {
   position: absolute;
-  left: 10px; /* Keep 10px visible when collapsed */
+  left: 10px;
   top: 50%;
   transform: translateY(-50%);
   width: 12px;
   height: 72px;
   padding: 12px;
-  background: linear-gradient(180deg, #252525, #1e1e1e);
-  border: 1px solid rgba(160, 196, 255, 0.3);
+  background: linear-gradient(180deg, #fff8fb, #ffe9f3);
+  border: 1px solid rgba(223, 156, 185, 0.25);
   border-left: none;
   border-radius: 0 12px 12px 0;
-  color: #a0c4ff;
+  color: #b05c81;
   font-size: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 5;
-  transition: left 0.35s cubic-bezier(.77,.2,.05,1.0), 
-              background 0.2s, 
-              color 0.2s,
-              border-color 0.2s;
-  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.4);
+  transition: left 0.35s cubic-bezier(.77,.2,.05,1.0), background 0.2s, color 0.2s, border-color 0.2s;
+  box-shadow: 4px 0 12px rgba(212, 142, 175, 0.16);
 }
 
 .sidebar-toggle-btn.sidebar-open {
-  left: 400px; /* Follow the sidebar when expanded */
+  left: 400px;
 }
 
 .sidebar-toggle-btn:hover {
-  background: linear-gradient(180deg, #333, #2a2a2a);
-  color: #c0d8ff;
-  border-color: rgba(160, 196, 255, 0.6);
-  box-shadow: 4px 0 16px rgba(160, 196, 255, 0.15);
+  background: linear-gradient(180deg, #ffdbe9, #ffe9f5);
+  color: #9f456d;
+  border-color: rgba(223, 156, 185, 0.45);
 }
 
 .sidebar-toggle-btn span {
   font-weight: 700;
   line-height: 1;
-  text-shadow: 0 0 8px rgba(160, 196, 255, 0.5);
 }
 
 .workflow-viewer {
@@ -172,7 +171,7 @@ const handleRefreshWorkflows = async () => {
   flex-direction: column;
   overflow: hidden;
   transition: margin-left 0.35s cubic-bezier(.77,.2,.05,1.0);
-  margin-left: 10px; /* Match the visible width when the sidebar is collapsed */
+  margin-left: 10px;
 }
 
 .placeholder {
@@ -183,43 +182,29 @@ const handleRefreshWorkflows = async () => {
   justify-content: center;
   position: relative;
   overflow: hidden;
-  background: transparent;
-  color: rgba(235, 235, 235, 0.7);
+  color: #73515f;
   text-align: center;
   padding: 24px;
+  margin: 20px;
+  border-radius: 24px;
 }
 
-.placeholder::before {
-  content: '';
-  position: absolute;
-  top: -150px;
-  left: 0;
-  right: 0;
-  height: 500px;
-  background: linear-gradient(
-    90deg,
-    #aaffcd,
-    #99eaf9,
-    #a0c4ff
-  );
-  filter: blur(120px);
-  opacity: 0.15;
-  z-index: 0;
-  pointer-events: none;
+.placeholder-eyebrow {
+  font-size: 13px;
+  font-weight: 700;
+  color: #b25c82;
+  margin-bottom: 12px;
 }
 
 .placeholder-title {
-  position: relative;
-  z-index: 1;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 700;
   margin-bottom: 8px;
+  color: #5b3041;
 }
 
 .placeholder-subtitle {
-  position: relative;
-  z-index: 1;
   font-size: 14px;
-  color: rgba(235, 235, 235, 0.6);
+  color: #8b6877;
 }
 </style>
