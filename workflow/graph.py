@@ -13,6 +13,7 @@ from runtime.node.executor.base import ExecutionContext
 from runtime.node.executor.factory import NodeExecutorFactory
 from utils.logger import WorkflowLogger
 from utils.exceptions import ValidationError, WorkflowExecutionError, WorkflowCancelledError
+from observability_runtime import emit_log_line, record_agent_message
 from sessions.manager import SessionManager
 from utils.structured_logger import get_server_logger
 from utils.human_prompt import (
@@ -580,6 +581,12 @@ class GraphExecutor:
             })
 
             self.log_manager.debug(f"Processing {len(input_results)} inputs together for node {node.id}")
+            emit_log_line(
+                self.observability_session_id,
+                source=node.id,
+                message=f"Processing {len(input_results)} inputs together for node {node.id}",
+                details={"node_id": node.id, "input_count": len(input_results)},
+            )
 
             # Check if any incoming edge has dynamic configuration
             dynamic_config = self._get_dynamic_config_for_node(node)
@@ -597,6 +604,7 @@ class GraphExecutor:
                 msg = self._ensure_source_output(raw_output, node.id)
                 node.append_output(msg)
                 output_messages.append(msg)
+                record_agent_message(self.observability_session_id, node.id, msg)
 
             # Use first output for context trace handling (backward compat)
             unified_output = output_messages[0] if output_messages else None

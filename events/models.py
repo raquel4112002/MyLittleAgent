@@ -15,6 +15,9 @@ class EventType(StrEnum):
     WORKFLOW_FAILED = "workflow_failed"
     AGENT_STARTED = "agent_started"
     AGENT_COMPLETED = "agent_completed"
+    AGENT_MESSAGE = "agent_message"
+    HUMAN_MESSAGE = "human_message"
+    AGENT_WAITING_FOR_HUMAN = "agent_waiting_for_human"
     LOG_LINE = "log_line"
 
 

@@ -8,6 +8,7 @@
                 to="/workflows"
                 :class="{ active: isWorkflowsActive }"
             >Workflows</router-link>
+            <router-link to="/observability">Monitor</router-link>
             <router-link to="/launch" target="_blank" rel="noopener">Launch</router-link>
             <router-link to="/batch-run" target="_blank" rel="noopener">Labaratory</router-link>
         </nav>

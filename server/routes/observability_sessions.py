@@ -24,3 +24,12 @@ async def get_observability_session(session_id: str):
 async def get_observability_session_events(session_id: str, limit: int | None = None):
     events = get_event_bus().store.list_events(session_id, limit=limit)
     return [item.model_dump(mode="json") for item in events]
+
+
+@router.get("/api/observability/sessions/{session_id}/messages")
+async def get_observability_session_messages(session_id: str, limit: int | None = None):
+    manager = get_session_manager()
+    session = manager.get_session(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return manager.message_store.list_messages(session_id, limit=limit)

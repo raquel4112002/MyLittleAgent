@@ -21,6 +21,10 @@ const routes = [
     {
         path: '/workflows/:name?',
         component: () => import('../pages/WorkflowWorkbench.vue')
+    },
+    {
+        path: '/observability',
+        component: () => import('../pages/ObservabilityView.vue')
     }
 ]
 

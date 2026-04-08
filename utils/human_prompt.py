@@ -8,6 +8,11 @@ from entity.messages import MessageBlock, MessageBlockType, MessageContent
 from utils.log_manager import LogManager
 
 
+def _get_session_manager():
+    from server.state import get_session_manager
+    return get_session_manager()
+
+
 @dataclass
 class PromptResult:
     """Typed result returned from prompt channels."""
@@ -92,6 +97,14 @@ class HumanPromptService:
         if self._session_id and "session_id" not in meta:
             meta["session_id"] = self._session_id
 
+        if self._session_id:
+            _get_session_manager().mark_waiting_for_human(
+                self._session_id,
+                node_id=node_id,
+                task_description=task_description,
+                inputs=inputs,
+            )
+
         with self._lock:
             with self._log_manager.human_timer(node_id):
                 raw_result = self._channel.request(
@@ -112,6 +125,14 @@ class HumanPromptService:
             sanitized_text,
             details={"task_description": task_description, **combined_metadata},
         )
+        if self._session_id:
+            _get_session_manager().record_human_message(
+                self._session_id,
+                node_id=node_id,
+                text=sanitized_text,
+                metadata=combined_metadata,
+            )
+            _get_session_manager().mark_running(self._session_id)
         return PromptResult(
             text=sanitized_text,
             blocks=normalized_blocks,
