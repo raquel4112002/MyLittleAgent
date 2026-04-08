@@ -264,8 +264,7 @@ class WorkflowRunService:
                 session_ref.executor = None
                 session_ref.graph = None
             self.session_controller.cleanup_session(session_id)
-            if session_id not in websocket_manager.active_connections:
-                self.session_store.pop_session(session_id)
+            # Keep session alive after completion/disconnect so the human can continue chatting
 
     def _build_initial_task_input(
         self,

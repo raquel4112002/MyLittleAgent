@@ -4,7 +4,7 @@ from typing import Any, Dict
 from utils.exceptions import ValidationError
 
 from server.services.session_execution import SessionExecutionController
-from server.services.session_store import WorkflowSessionStore
+from server.services.session_store import WorkflowSessionStore, SessionStatus
 
 
 class MessageHandler:
@@ -25,6 +25,8 @@ class MessageHandler:
         message_type = data.get("type")
         if message_type == "human_input":
             await self._handle_human_input(session_id, data, websocket_manager)
+        elif message_type == "chat_message":
+            await self._handle_chat_message(session_id, data, websocket_manager)
         elif message_type == "ping":
             await self._handle_ping(session_id, websocket_manager)
         elif message_type == "get_status":
@@ -69,6 +71,39 @@ class MessageHandler:
                 session_id,
                 {"type": "error", "data": {"message": str(exc)}},
             )
+
+    async def _handle_chat_message(self, session_id: str, data: Dict[str, Any], websocket_manager):
+        payload = data.get("data", {}) or {}
+        text = (payload.get("text") or "").strip()
+        if not text:
+            await websocket_manager.send_message(
+                session_id,
+                {"type": "error", "data": {"message": "Empty chat message"}},
+            )
+            return
+
+        session = self.session_store.get_session(session_id)
+        if not session:
+            await websocket_manager.send_message(
+                session_id,
+                {"type": "error", "data": {"message": "Session not found"}},
+            )
+            return
+
+        session.updated_at = __import__('time').time()
+        if session.status == SessionStatus.COMPLETED:
+            session.status = SessionStatus.IDLE
+
+        await websocket_manager.send_message(
+            session_id,
+            {
+                "type": "chat_message_received",
+                "data": {
+                    "text": text,
+                    "message": "Session message accepted",
+                },
+            },
+        )
 
     async def _handle_ping(self, session_id: str, websocket_manager):
         await websocket_manager.handle_heartbeat(session_id)

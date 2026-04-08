@@ -92,8 +92,9 @@ class WebSocketManager:
             del self.connection_timestamps[session_id]
         self.session_controller.cleanup_session(session_id)
         remaining_session = self.session_store.get_session(session_id)
+        # keep completed/idle sessions alive for persistent chat and observability
         if remaining_session and remaining_session.executor is None:
-            self.session_store.pop_session(session_id)
+            logging.info("Keeping session alive after disconnect: %s", session_id)
         self.attachment_service.cleanup_session(session_id)
         logging.info("WebSocket disconnected: %s", session_id)
 
@@ -105,7 +106,6 @@ class WebSocketManager:
             except Exception as exc:
                 traceback.print_exc()
                 logging.error("Failed to send message to %s: %s", session_id, exc)
-                # self.disconnect(session_id)
 
     def send_message_sync(self, session_id: str, message: Dict[str, Any]) -> None:
         try:

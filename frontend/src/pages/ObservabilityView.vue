@@ -64,17 +64,20 @@ async function sendReply() {
   replyBusy.value = true
   error.value = ''
   try {
-    const response = await fetch(`${apiBase}/api/observability/sessions/${selectedSessionId.value}/reply`, {
+    const endpoint = pendingRequest.value
+      ? `${apiBase}/api/observability/sessions/${selectedSessionId.value}/reply`
+      : `${apiBase}/api/observability/sessions/${selectedSessionId.value}/human-message`
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: replyText.value })
     })
-    if (!response.ok) throw new Error(`Failed to send reply (${response.status})`)
+    if (!response.ok) throw new Error(`Failed to send message (${response.status})`)
     replyText.value = ''
     await loadSessionDetail(selectedSessionId.value)
     await loadSessions()
   } catch (err) {
-    error.value = err.message || 'Failed to send reply'
+    error.value = err.message || 'Failed to send message'
   } finally {
     replyBusy.value = false
   }
@@ -224,7 +227,14 @@ onBeforeUnmount(() => {
               {{ replyBusy ? 'Sending...' : 'Send Reply' }}
             </button>
           </div>
-          <div v-else class="empty-state">No pending human request.</div>
+          <div v-else class="pending-box sakura-soft-block">
+            <div class="pending-title">Open session chat</div>
+            <div class="pending-text">Send a free-form message into the live session whenever you want.</div>
+            <textarea v-model="replyText" class="reply-box" placeholder="Send a free-form message to the session..."></textarea>
+            <button class="reply-btn" :disabled="replyBusy || !replyText.trim()" @click="sendReply">
+              {{ replyBusy ? 'Sending...' : 'Send Message' }}
+            </button>
+          </div>
         </div>
 
         <div class="panel-subsection">

@@ -1,0 +1,13 @@
+{
+  "session_id": "6690af2b-e46b-4701-b2c9-409a4bee66c0",
+  "workflow_id": "session_6690af2b-e46b-4701-b2c9-409a4bee66c0",
+  "status": "FAILED",
+  "created_at": "2026-04-08T15:15:37.910174Z",
+  "updated_at": "2026-04-08T15:20:32.304937Z",
+  "current_node_id": "Mission Manager",
+  "current_agent_id": "Mission Manager",
+  "pending_human_request": null,
+  "metadata": {
+    "graph_name": "session_6690af2b-e46b-4701-b2c9-409a4bee66c0"
+  }
+}

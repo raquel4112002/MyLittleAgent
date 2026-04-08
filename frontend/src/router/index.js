@@ -25,6 +25,14 @@ const routes = [
     {
         path: '/observability',
         component: () => import('../pages/ObservabilityView.vue')
+    },
+    {
+        path: '/office',
+        component: () => import('../pages/OfficeView.vue')
+    },
+    {
+        path: '/office-2d',
+        component: () => import('../pages/Office2DView.vue')
     }
 ]
 

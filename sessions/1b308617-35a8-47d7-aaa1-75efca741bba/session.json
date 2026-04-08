@@ -1,0 +1,13 @@
+{
+  "session_id": "1b308617-35a8-47d7-aaa1-75efca741bba",
+  "workflow_id": "session_1b308617-35a8-47d7-aaa1-75efca741bba",
+  "status": "COMPLETED",
+  "created_at": "2026-04-08T15:21:18.779163Z",
+  "updated_at": "2026-04-08T15:35:38.410557Z",
+  "current_node_id": "Final Synthesizer",
+  "current_agent_id": "Final Synthesizer",
+  "pending_human_request": null,
+  "metadata": {
+    "graph_name": "session_1b308617-35a8-47d7-aaa1-75efca741bba"
+  }
+}

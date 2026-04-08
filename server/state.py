@@ -4,12 +4,14 @@ from typing import Optional
 
 from events.bus import EventBus
 from server.services.websocket_manager import WebSocketManager
+from sessions.human_broker import HumanResponseBroker
 from sessions.manager import SessionManager
 from utils.exceptions import ValidationError
 
 websocket_manager: Optional[WebSocketManager] = None
 session_manager: Optional[SessionManager] = None
 event_bus: Optional[EventBus] = None
+human_response_broker: Optional[HumanResponseBroker] = None
 
 
 def init_state() -> None:
@@ -18,6 +20,7 @@ def init_state() -> None:
     get_websocket_manager()
     get_session_manager()
     get_event_bus()
+    get_human_response_broker()
 
 
 def get_websocket_manager() -> WebSocketManager:
@@ -39,6 +42,13 @@ def get_event_bus() -> EventBus:
     if event_bus is None:
         event_bus = EventBus()
     return event_bus
+
+
+def get_human_response_broker() -> HumanResponseBroker:
+    global human_response_broker
+    if human_response_broker is None:
+        human_response_broker = HumanResponseBroker()
+    return human_response_broker
 
 
 def ensure_known_session(session_id: str, *, require_connection: bool = False) -> WebSocketManager:

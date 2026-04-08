@@ -13,10 +13,13 @@ def _get_session_manager():
     return get_session_manager()
 
 
+def _get_human_response_broker():
+    from server.state import get_human_response_broker
+    return get_human_response_broker()
+
+
 @dataclass
 class PromptResult:
-    """Typed result returned from prompt channels."""
-
     text: str
     blocks: Optional[List[MessageBlock]] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -26,8 +29,6 @@ class PromptResult:
 
 
 class PromptChannel(Protocol):
-    """Channel interface that performs the actual user interaction."""
-
     def request(
         self,
         *,
@@ -36,13 +37,11 @@ class PromptChannel(Protocol):
         inputs: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> PromptResult:
-        """Collect user feedback and return the structured response."""
+        ...
 
 
 @dataclass
 class CliPromptChannel:
-    """Default channel that prompts the operator via CLI input()."""
-
     input_func: Callable[[str], str] = input
 
     def request(
@@ -62,57 +61,51 @@ class CliPromptChannel:
         header.append("=== Your response: ===")
         prompt = "\n".join(header) + "\n"
         response = self.input_func(prompt)
-        return PromptResult(
-            text=response,
-            blocks=[MessageBlock.text_block(response or "")],
-        )
+        return PromptResult(text=response, blocks=[MessageBlock.text_block(response or "")])
 
 
 class HumanPromptService:
-    """Coordinates human feedback collection across nodes and tools."""
-
-    def __init__(
-        self,
-        *,
-        log_manager: LogManager,
-        channel: PromptChannel,
-        session_id: Optional[str] = None,
-    ) -> None:
+    def __init__(self, *, log_manager: LogManager, channel: PromptChannel, session_id: Optional[str] = None) -> None:
         self._log_manager = log_manager
         self._channel = channel
         self._session_id = session_id
         self._lock = threading.Lock()
 
-    def request(
-        self,
-        node_id: str,
-        task_description: str,
-        *,
-        inputs: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> PromptResult:
-        """Request human input through the configured channel."""
-
+    def request(self, node_id: str, task_description: str, *, inputs: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None) -> PromptResult:
         meta = dict(metadata or {})
         if self._session_id and "session_id" not in meta:
             meta["session_id"] = self._session_id
 
         if self._session_id:
-            _get_session_manager().mark_waiting_for_human(
+            session = _get_session_manager().mark_waiting_for_human(
                 self._session_id,
                 node_id=node_id,
                 task_description=task_description,
                 inputs=inputs,
             )
-
-        with self._lock:
-            with self._log_manager.human_timer(node_id):
-                raw_result = self._channel.request(
-                    node_id=node_id,
-                    task=task_description,
-                    inputs=inputs,
-                    metadata=meta,
+            request_id = session.pending_human_request.request_id if session and session.pending_human_request else f"{self._session_id}:{node_id}"
+            _get_human_response_broker().register_request(
+                self._session_id,
+                request_id=request_id,
+                node_id=node_id,
+                task_description=task_description,
+                inputs=inputs,
+            )
+            with self._lock:
+                with self._log_manager.human_timer(node_id):
+                    broker_result = _get_human_response_broker().wait_for_response(self._session_id)
+            if broker_result is None or broker_result.response_text is None:
+                raw_result = PromptResult(text="", blocks=[MessageBlock.text_block("")], metadata={"timeout": True})
+            else:
+                raw_result = PromptResult(
+                    text=broker_result.response_text,
+                    blocks=[MessageBlock.text_block(broker_result.response_text)],
+                    metadata=broker_result.response_metadata or {},
                 )
+        else:
+            with self._lock:
+                with self._log_manager.human_timer(node_id):
+                    raw_result = self._channel.request(node_id=node_id, task=task_description, inputs=inputs, metadata=meta)
 
         prompt_result = self._normalize_result(raw_result)
         sanitized_text = self._sanitize_response(prompt_result.text)
@@ -133,11 +126,7 @@ class HumanPromptService:
                 metadata=combined_metadata,
             )
             _get_session_manager().mark_running(self._session_id)
-        return PromptResult(
-            text=sanitized_text,
-            blocks=normalized_blocks,
-            metadata=combined_metadata,
-        )
+        return PromptResult(text=sanitized_text, blocks=normalized_blocks, metadata=combined_metadata)
 
     @staticmethod
     def _sanitize_response(response: Any) -> str:
@@ -150,11 +139,7 @@ class HumanPromptService:
         text = self._sanitize_response(raw_result)
         return PromptResult(text=text, blocks=[MessageBlock.text_block(text)])
 
-    def _normalize_blocks(
-        self,
-        blocks: Optional[List[MessageBlock]],
-        fallback_text: str,
-    ) -> List[MessageBlock]:
+    def _normalize_blocks(self, blocks: Optional[List[MessageBlock]], fallback_text: str) -> List[MessageBlock]:
         if not blocks:
             return [MessageBlock.text_block(fallback_text)]
         normalized: List[MessageBlock] = []
@@ -167,19 +152,14 @@ class HumanPromptService:
 
 
 def resolve_prompt_channel(workspace_hook: Any) -> PromptChannel | None:
-    """Helper to fetch a PromptChannel from a workspace hook if available."""
-
     if workspace_hook is None:
         return None
-
     getter = getattr(workspace_hook, "get_prompt_channel", None)
     if callable(getter):
         channel = getter()
         if channel is not None:
             return channel
-
     channel = getattr(workspace_hook, "prompt_channel", None)
     if channel is not None:
         return channel
-
     return None

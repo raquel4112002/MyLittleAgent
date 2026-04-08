@@ -1,0 +1,13 @@
+{
+  "session_id": "38d69a13-0192-4e62-b719-dcc9e8a3f871",
+  "workflow_id": "session_38d69a13-0192-4e62-b719-dcc9e8a3f871",
+  "status": "FAILED",
+  "created_at": "2026-04-08T15:10:17.172175Z",
+  "updated_at": "2026-04-08T15:15:09.212149Z",
+  "current_node_id": "Team Coordinator",
+  "current_agent_id": "Team Coordinator",
+  "pending_human_request": null,
+  "metadata": {
+    "graph_name": "session_38d69a13-0192-4e62-b719-dcc9e8a3f871"
+  }
+}

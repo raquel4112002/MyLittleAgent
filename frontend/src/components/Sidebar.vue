@@ -10,6 +10,8 @@
                 :class="{ active: isWorkflowsActive }"
             >Workflows</router-link>
             <router-link to="/observability">Monitor</router-link>
+            <router-link to="/office">Office</router-link>
+            <router-link to="/office-2d">Office 2D</router-link>
             <router-link to="/launch" target="_blank" rel="noopener">Launch</router-link>
             <router-link to="/batch-run" target="_blank" rel="noopener">Lab</router-link>
         </nav>

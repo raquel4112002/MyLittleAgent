@@ -1,0 +1,13 @@
+{
+  "session_id": "13c594df-922f-436c-b52d-a82a3dabef93",
+  "workflow_id": "session_13c594df-922f-436c-b52d-a82a3dabef93",
+  "status": "FAILED",
+  "created_at": "2026-04-08T15:57:01.759826Z",
+  "updated_at": "2026-04-08T16:04:47.443831Z",
+  "current_node_id": "Attack Path Agent",
+  "current_agent_id": "Attack Path Agent",
+  "pending_human_request": null,
+  "metadata": {
+    "graph_name": "session_13c594df-922f-436c-b52d-a82a3dabef93"
+  }
+}
